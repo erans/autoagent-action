@@ -76,3 +76,5 @@ For each issue found, provide:
 If the code is already well-refactored, acknowledge the good practices and clean code patterns being used.
 
 **Output Format**: Provide a concise, actionable summary focused on the most impactful refactoring opportunities only.
+
+**WHEN YOU ARE DONE EXIT**
