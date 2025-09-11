@@ -51,6 +51,8 @@ Analyze the code for refactoring opportunities and code smells. Focus on the fol
 
 ## Refactoring Suggestions
 
+**IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
+
 For each issue found, provide:
 - **Location**: File and line number
 - **Issue Type**: Specific code smell or refactoring opportunity
@@ -72,3 +74,5 @@ For each issue found, provide:
 - Introduce Null Object
 
 If the code is already well-refactored, acknowledge the good practices and clean code patterns being used.
+
+**Output Format**: Provide a concise, actionable summary focused on the most impactful refactoring opportunities only.

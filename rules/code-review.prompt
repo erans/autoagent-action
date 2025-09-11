@@ -39,6 +39,8 @@ Perform a comprehensive code review focusing on the following aspects:
 - **Complexity**: Is the code complexity reasonable and manageable?
 - **Dependencies**: Are dependencies appropriate and up-to-date?
 
+**IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
+
 For each issue found, provide:
 - File and line number
 - Specific concern or improvement suggestion
@@ -47,3 +49,5 @@ For each issue found, provide:
 - Code example if applicable
 
 If the code looks good, acknowledge the positive aspects and any particularly well-implemented patterns.
+
+**Output Format**: Provide a concise, actionable summary focused on the most important code quality issues only.

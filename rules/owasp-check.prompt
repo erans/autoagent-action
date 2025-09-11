@@ -20,6 +20,8 @@ Perform a comprehensive security analysis based on OWASP Top 10 guidelines. Focu
 
 10. **Insufficient Logging & Monitoring**: Check for inadequate logging of security events and lack of monitoring for suspicious activities.
 
+**IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
+
 For each issue found, provide:
 - The specific file and line number
 - A brief description of the vulnerability
@@ -28,3 +30,5 @@ For each issue found, provide:
 - OWASP category it falls under
 
 If no security issues are found, confirm that the code appears to follow OWASP security best practices.
+
+**Output Format**: Provide a concise, actionable summary focused on the most critical security findings only.
