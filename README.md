@@ -145,6 +145,7 @@ Database queries look optimized. Consider adding indexes for the new columns.
 - GitHub CLI (`gh`) must be available in the runner environment
 - For YAML parsing: `yq` (optional, falls back to `jq`)
 - For JSON parsing: `jq`
+- **Cursor API Key** - Required for cursor-agent to work (add as repository secret `CURSOR_API_KEY`)
 
 ## Permissions
 
@@ -158,6 +159,20 @@ permissions:
 ```
 
 Add this to your workflow file to ensure the action can post comments to pull requests.
+
+## Setup
+
+### 1. Add Cursor API Key
+
+1. Go to your repository settings
+2. Navigate to **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Name: `CURSOR_API_KEY`
+5. Value: Your Cursor API key (get it from [Cursor Settings](https://cursor.sh/settings))
+
+### 2. Add Workflow Permissions
+
+Add the permissions block to your workflow file (see Permissions section above).
 
 ## Error Handling
 
