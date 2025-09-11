@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "DEBUG: Script started at $(date)"
+echo "DEBUG: Arguments received: $*"
+
 RULES="${1:-}"
 CUSTOM_PROMPT="${2:-}"
 AGENT="${3:-cursor}"
 RESULT_FILE="results.json"
 
+echo "DEBUG: Parsed arguments - RULES: '$RULES', CUSTOM_PROMPT: '$CUSTOM_PROMPT', AGENT: '$AGENT'"
+
 # Get the action directory (where this script is located)
 ACTION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "DEBUG: Action directory: $ACTION_DIR"
 
 # Ensure cursor-agent is in PATH
 export PATH="$HOME/.cursor/bin:$PATH"
+echo "DEBUG: Updated PATH: $PATH"
 
 # Set default model if not provided
 MODEL="${MODEL:-gpt-5}"
@@ -50,26 +57,34 @@ add_result() {
 }
 
 # Parse rules input (support both YAML and JSON)
+echo "DEBUG: About to parse rules input: '$RULES'"
 RULES_ARRAY=""
 
 if [ -n "$RULES" ]; then
+    echo "DEBUG: Rules input is not empty, parsing..."
     # Try to parse as YAML first, then JSON
     if command -v yq >/dev/null 2>&1; then
+        echo "DEBUG: Using yq to parse YAML"
         # Parse as YAML using yq
         RULES_ARRAY=$(echo "$RULES" | yq -r '.[]' 2>/dev/null || echo "")
     elif command -v jq >/dev/null 2>&1; then
+        echo "DEBUG: Using jq to parse JSON"
         # Parse as JSON using jq
         RULES_ARRAY=$(echo "$RULES" | jq -r '.[]' 2>/dev/null || echo "")
     else
+        echo "DEBUG: No yq or jq found, treating as space-separated list"
         # Fallback: treat as space-separated list
         RULES_ARRAY="$RULES"
     fi
 
+    echo "DEBUG: Parsed rules array: '$RULES_ARRAY'"
     if [ -z "$RULES_ARRAY" ] && [ "$RULES" != "[]" ]; then
         echo "Error: Could not parse rules input. Please provide valid YAML or JSON array."
         echo "Example: '[\"owasp-check\", \"code-review\"]'"
         exit 1
     fi
+else
+    echo "DEBUG: No rules input provided"
 fi
 
 # Execute each rule (if any)
@@ -87,6 +102,7 @@ if [ -n "$RULES_ARRAY" ]; then
     fi
 
     echo "Executing rule: $RULE"
+    echo "DEBUG: About to load base prompt file: $BASE_PROMPT_FILE"
     
     # Load base prompt with GitHub Actions context
     BASE_PROMPT_FILE="$ACTION_DIR/rules/base.prompt"
@@ -94,20 +110,25 @@ if [ -n "$RULES_ARRAY" ]; then
         echo "Error: Base prompt file not found: $BASE_PROMPT_FILE"
         exit 1
     fi
+    echo "DEBUG: Base prompt file found, loading content..."
     
     # Load comment prompt for output formatting
     COMMENT_PROMPT_FILE="$ACTION_DIR/rules/comment.prompt"
+    echo "DEBUG: About to load comment prompt file: $COMMENT_PROMPT_FILE"
     if [ ! -f "$COMMENT_PROMPT_FILE" ]; then
         echo "Error: Comment prompt file not found: $COMMENT_PROMPT_FILE"
         exit 1
     fi
+    echo "DEBUG: Comment prompt file found, loading content..."
     
     # Combine base prompt with rule-specific prompt and comment formatting
+    echo "DEBUG: About to combine prompts..."
     FULL_PROMPT="$(cat "$BASE_PROMPT_FILE")
 
 $(cat "$PROMPT_FILE")
 
 $(cat "$COMMENT_PROMPT_FILE")"
+    echo "DEBUG: Prompts combined, total length: ${#FULL_PROMPT}"
     
     # Execute the rule using the selected agent
     case "$AGENT" in
@@ -126,21 +147,26 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Which cursor-agent: $(which cursor-agent)"
                 echo "DEBUG: Starting cursor-agent execution..."
                 
-                # Try different approaches for cursor-agent
-                echo "DEBUG: Trying cursor-agent with -p flag..."
-                echo "DEBUG: Command: timeout 60 cursor-agent -p \"[PROMPT]\" --model \"$MODEL\""
-                OUTPUT=$(timeout 60 cursor-agent -p "$FULL_PROMPT" --model "$MODEL" 2>&1 || echo "Error: Failed with -p flag")
+                # Try the correct cursor-agent syntax
+                echo "DEBUG: Using correct cursor-agent syntax..."
+                echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text --model \"$MODEL\" \"[PROMPT]\""
+                echo "DEBUG: Environment check - CURSOR_API_KEY length: ${#CURSOR_API_KEY}"
                 
-                if [[ "$OUTPUT" == *"Error: Failed with -p flag"* ]]; then
-                    echo "DEBUG: -p flag failed, trying with stdin input..."
-                    echo "DEBUG: Command: echo \"[PROMPT]\" | timeout 60 cursor-agent --model \"$MODEL\""
-                    OUTPUT=$(echo "$FULL_PROMPT" | timeout 60 cursor-agent --model "$MODEL" 2>&1 || echo "Error: Failed with stdin input")
+                # Try with explicit API key
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text --model "$MODEL" "$FULL_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                
+                # If that fails, try without model flag
+                if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
+                    echo "DEBUG: Model flag failed, trying without model..."
+                    echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text \"[PROMPT]\""
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text "$FULL_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
                 fi
                 
-                if [[ "$OUTPUT" == *"Error: Failed with stdin input"* ]]; then
-                    echo "DEBUG: stdin input failed, trying basic command..."
-                    echo "DEBUG: Command: timeout 60 cursor-agent \"[PROMPT]\""
-                    OUTPUT=$(timeout 60 cursor-agent "$FULL_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
+                # If that fails, try with agent command
+                if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
+                    echo "DEBUG: Print flag failed, trying with agent command..."
+                    echo "DEBUG: Command: timeout 60 cursor-agent agent --print --output-format text \"[PROMPT]\""
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent agent --print --output-format text "$FULL_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
                 fi
                 
                 echo "DEBUG: Raw cursor-agent output:"
@@ -199,21 +225,23 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
                 echo "DEBUG: Starting custom prompt execution..."
                 
-                # Try different approaches for cursor-agent
-                echo "DEBUG: Trying cursor-agent with -p flag for custom prompt..."
-                echo "DEBUG: Command: timeout 60 cursor-agent -p \"[CUSTOM_PROMPT]\" --model \"$MODEL\""
-                OUTPUT=$(timeout 60 cursor-agent -p "$FULL_CUSTOM_PROMPT" --model "$MODEL" 2>&1 || echo "Error: Failed with -p flag")
+                # Try the correct cursor-agent syntax for custom prompt
+                echo "DEBUG: Using correct cursor-agent syntax for custom prompt..."
+                echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text --model \"$MODEL\" \"[CUSTOM_PROMPT]\""
                 
-                if [[ "$OUTPUT" == *"Error: Failed with -p flag"* ]]; then
-                    echo "DEBUG: -p flag failed, trying with stdin input for custom prompt..."
-                    echo "DEBUG: Command: echo \"[CUSTOM_PROMPT]\" | timeout 60 cursor-agent --model \"$MODEL\""
-                    OUTPUT=$(echo "$FULL_CUSTOM_PROMPT" | timeout 60 cursor-agent --model "$MODEL" 2>&1 || echo "Error: Failed with stdin input")
+                # Try with explicit API key
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text --model "$MODEL" "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                
+                # If that fails, try without model flag
+                if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
+                    echo "DEBUG: Model flag failed for custom prompt, trying without model..."
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
                 fi
                 
-                if [[ "$OUTPUT" == *"Error: Failed with stdin input"* ]]; then
-                    echo "DEBUG: stdin input failed, trying basic command for custom prompt..."
-                    echo "DEBUG: Command: timeout 60 cursor-agent \"[CUSTOM_PROMPT]\""
-                    OUTPUT=$(timeout 60 cursor-agent "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
+                # If that fails, try with agent command
+                if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
+                    echo "DEBUG: Print flag failed for custom prompt, trying with agent command..."
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent agent --print --output-format text "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
                 fi
                 
                 echo "DEBUG: Raw custom prompt output:"
