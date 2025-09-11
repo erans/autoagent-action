@@ -6,6 +6,9 @@ CUSTOM_PROMPT="${2:-}"
 AGENT="${3:-cursor}"
 RESULT_FILE="results.json"
 
+# Get the action directory (where this script is located)
+ACTION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 echo "Running rules with agent: $AGENT"
 
 # Validate inputs
@@ -62,24 +65,24 @@ if [ -n "$RULES_ARRAY" ]; then
             continue
         fi
     
-    PROMPT_FILE="rules/${RULE}.prompt"
+    PROMPT_FILE="$ACTION_DIR/rules/${RULE}.prompt"
     if [ ! -f "$PROMPT_FILE" ]; then
         echo "Error: Rule file not found: $PROMPT_FILE"
-        echo "Available rules: $(ls rules/*.prompt 2>/dev/null | sed 's/rules\///g' | sed 's/\.prompt//g' | tr '\n' ' ' || echo 'none')"
+        echo "Available rules: $(ls "$ACTION_DIR/rules"/*.prompt 2>/dev/null | sed 's/.*\///g' | sed 's/\.prompt//g' | tr '\n' ' ' || echo 'none')"
         exit 1
     fi
 
     echo "Executing rule: $RULE"
     
     # Load base prompt with GitHub Actions context
-    BASE_PROMPT_FILE="rules/base.prompt"
+    BASE_PROMPT_FILE="$ACTION_DIR/rules/base.prompt"
     if [ ! -f "$BASE_PROMPT_FILE" ]; then
         echo "Error: Base prompt file not found: $BASE_PROMPT_FILE"
         exit 1
     fi
     
     # Load comment prompt for output formatting
-    COMMENT_PROMPT_FILE="rules/comment.prompt"
+    COMMENT_PROMPT_FILE="$ACTION_DIR/rules/comment.prompt"
     if [ ! -f "$COMMENT_PROMPT_FILE" ]; then
         echo "Error: Comment prompt file not found: $COMMENT_PROMPT_FILE"
         exit 1
@@ -117,14 +120,14 @@ if [ -n "$CUSTOM_PROMPT" ]; then
     echo "Executing custom prompt..."
     
     # Load base prompt with GitHub Actions context
-    BASE_PROMPT_FILE="rules/base.prompt"
+    BASE_PROMPT_FILE="$ACTION_DIR/rules/base.prompt"
     if [ ! -f "$BASE_PROMPT_FILE" ]; then
         echo "Error: Base prompt file not found: $BASE_PROMPT_FILE"
         exit 1
     fi
     
     # Load comment prompt for output formatting
-    COMMENT_PROMPT_FILE="rules/comment.prompt"
+    COMMENT_PROMPT_FILE="$ACTION_DIR/rules/comment.prompt"
     if [ ! -f "$COMMENT_PROMPT_FILE" ]; then
         echo "Error: Comment prompt file not found: $COMMENT_PROMPT_FILE"
         exit 1

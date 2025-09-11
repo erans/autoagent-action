@@ -39,13 +39,13 @@ runs:
     - name: Install Agent (if enabled)
       if: ${{ inputs.install-agent == 'true' }}
       shell: bash
-      run: scripts/install_agent.sh "${{ inputs.agent }}"
+      run: ${{ github.action_path }}/scripts/install_agent.sh "${{ inputs.agent }}"
 
     - name: Execute Rules and Custom Prompt
       shell: bash
-      run: scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}"
+      run: ${{ github.action_path }}/scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}"
 
     - name: Post Results as PR Comment
       if: ${{ inputs.action == 'comment' }}
       shell: bash
-      run: scripts/post_comment.sh results.json
+      run: ${{ github.action_path }}/scripts/post_comment.sh results.json
