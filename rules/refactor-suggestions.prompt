@@ -1,0 +1,74 @@
+Analyze the code for refactoring opportunities and code smells. Focus on the following areas:
+
+## Code Smells to Identify
+
+### Long Methods/Functions
+- Methods longer than 20-30 lines
+- Functions with too many parameters (more than 3-4)
+- Methods with high cyclomatic complexity
+
+### Large Classes
+- Classes with too many responsibilities
+- Classes with too many methods or fields
+- God classes that do everything
+
+### Duplicate Code
+- Copy-paste programming
+- Similar logic repeated in multiple places
+- Opportunities for extraction into common methods
+
+### Dead Code
+- Unused variables, methods, or classes
+- Commented-out code that should be removed
+- Unreachable code paths
+
+### Poor Naming
+- Variables with unclear names (a, b, temp, data)
+- Methods that don't clearly describe what they do
+- Classes with vague or misleading names
+
+### Long Parameter Lists
+- Methods with many parameters
+- Opportunities to use parameter objects
+- Boolean parameters that could be enums
+
+### Data Clumps
+- Groups of data that always appear together
+- Opportunities to create data structures or classes
+
+### Primitive Obsession
+- Overuse of primitive types instead of domain objects
+- Magic numbers and strings that should be constants
+
+### Switch Statements
+- Long switch/if-else chains
+- Opportunities for polymorphism or strategy pattern
+
+### Comments
+- Code that needs comments to be understood
+- Outdated or misleading comments
+- Commented-out code
+
+## Refactoring Suggestions
+
+For each issue found, provide:
+- **Location**: File and line number
+- **Issue Type**: Specific code smell or refactoring opportunity
+- **Current Code**: Brief excerpt showing the problem
+- **Suggested Refactoring**: Specific refactoring technique to apply
+- **Benefits**: Why this refactoring would improve the code
+- **Priority**: High/Medium/Low based on impact
+
+## Refactoring Techniques to Suggest
+- Extract Method
+- Extract Class
+- Move Method
+- Replace Conditional with Polymorphism
+- Introduce Parameter Object
+- Replace Magic Number with Symbolic Constant
+- Remove Duplicate Code
+- Split Large Method
+- Replace Inheritance with Delegation
+- Introduce Null Object
+
+If the code is already well-refactored, acknowledge the good practices and clean code patterns being used.

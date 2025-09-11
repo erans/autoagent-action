@@ -1,0 +1,51 @@
+name: "AutoAgent"
+description: "Composable GitHub Action to run AI agent prompts on a repository"
+author: "Eran Sandler"
+
+inputs:
+  rules:
+    description: "YAML or JSON list of predefined rules to execute."
+    required: false
+    type: string
+    default: "[]"
+
+  custom:
+    description: "Optional custom prompt appended to the predefined rules."
+    required: false
+    type: string
+    default: ""
+
+  action:
+    description: "Determines what to do with the result. Supported: comment"
+    required: true
+    type: string
+    default: "comment"
+
+  install-agent:
+    description: "Boolean flag to control whether to install the agent automatically. Defaults to true."
+    required: false
+    type: boolean
+    default: true
+
+  agent:
+    description: "Which agent to use. Current default is cursor."
+    required: false
+    type: string
+    default: "cursor"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Agent (if enabled)
+      if: ${{ inputs.install-agent == 'true' }}
+      shell: bash
+      run: scripts/install_agent.sh "${{ inputs.agent }}"
+
+    - name: Execute Rules and Custom Prompt
+      shell: bash
+      run: scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}"
+
+    - name: Post Results as PR Comment
+      if: ${{ inputs.action == 'comment' }}
+      shell: bash
+      run: scripts/post_comment.sh results.json

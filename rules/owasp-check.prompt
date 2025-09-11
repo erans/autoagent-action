@@ -1,0 +1,30 @@
+Perform a comprehensive security analysis based on OWASP Top 10 guidelines. Focus on the following areas:
+
+1. **Injection Vulnerabilities**: Look for SQL injection, NoSQL injection, LDAP injection, OS command injection, and other injection flaws in the code.
+
+2. **Broken Authentication**: Check for weak authentication mechanisms, session management issues, and credential management problems.
+
+3. **Sensitive Data Exposure**: Identify hardcoded secrets, API keys, passwords, or other sensitive information that should not be exposed.
+
+4. **XML External Entities (XXE)**: Look for XML processing vulnerabilities that could lead to XXE attacks.
+
+5. **Broken Access Control**: Check for missing or improper access controls, privilege escalation vulnerabilities, and insecure direct object references.
+
+6. **Security Misconfiguration**: Identify insecure default configurations, missing security headers, and unnecessary features enabled.
+
+7. **Cross-Site Scripting (XSS)**: Look for stored, reflected, and DOM-based XSS vulnerabilities in web applications.
+
+8. **Insecure Deserialization**: Check for unsafe deserialization of untrusted data that could lead to remote code execution.
+
+9. **Using Components with Known Vulnerabilities**: Identify outdated dependencies, libraries, or frameworks with known security issues.
+
+10. **Insufficient Logging & Monitoring**: Check for inadequate logging of security events and lack of monitoring for suspicious activities.
+
+For each issue found, provide:
+- The specific file and line number
+- A brief description of the vulnerability
+- The potential impact
+- Recommended remediation steps
+- OWASP category it falls under
+
+If no security issues are found, confirm that the code appears to follow OWASP security best practices.

@@ -1,0 +1,49 @@
+Perform a comprehensive code review focusing on the following aspects:
+
+## Code Quality
+- **Readability**: Is the code clear, well-structured, and easy to understand?
+- **Naming**: Are variable, function, and class names descriptive and follow naming conventions?
+- **Comments**: Are there appropriate comments explaining complex logic?
+- **Documentation**: Is the code properly documented for future maintainers?
+
+## Architecture & Design
+- **SOLID Principles**: Does the code follow Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles?
+- **Design Patterns**: Are appropriate design patterns used where beneficial?
+- **Separation of Concerns**: Is business logic properly separated from presentation and data access layers?
+- **Modularity**: Is the code well-modularized and reusable?
+
+## Performance
+- **Efficiency**: Are there any performance bottlenecks or inefficient algorithms?
+- **Memory Usage**: Are there potential memory leaks or excessive memory consumption?
+- **Database Queries**: Are database queries optimized and not causing N+1 problems?
+- **Caching**: Could appropriate caching improve performance?
+
+## Error Handling
+- **Exception Handling**: Are exceptions properly caught and handled?
+- **Input Validation**: Is user input properly validated and sanitized?
+- **Edge Cases**: Are edge cases and error conditions properly handled?
+- **Logging**: Is appropriate logging in place for debugging and monitoring?
+
+## Testing
+- **Test Coverage**: Is the code adequately tested?
+- **Test Quality**: Are tests meaningful and not just testing implementation details?
+- **Testability**: Is the code designed to be easily testable?
+
+## Security
+- **Input Sanitization**: Is all user input properly sanitized?
+- **Authentication & Authorization**: Are proper security measures in place?
+- **Data Protection**: Is sensitive data properly protected?
+
+## Maintainability
+- **Code Duplication**: Is there any unnecessary code duplication?
+- **Complexity**: Is the code complexity reasonable and manageable?
+- **Dependencies**: Are dependencies appropriate and up-to-date?
+
+For each issue found, provide:
+- File and line number
+- Specific concern or improvement suggestion
+- Impact level (High/Medium/Low)
+- Recommended action
+- Code example if applicable
+
+If the code looks good, acknowledge the positive aspects and any particularly well-implemented patterns.

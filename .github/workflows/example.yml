@@ -1,0 +1,57 @@
+name: AutoAgent Example
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # Test 1: Full analysis with all rules and custom prompt
+  full-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AutoAgent - Full Analysis
+        uses: erans/autoagent@v1
+        with:
+          rules: |
+            - owasp-check
+            - code-review
+            - refactor-suggestions
+          custom: |
+            Please check for inefficient SQL queries and suggest optimizations.
+            Also verify that all new functions have proper error handling.
+          action: comment
+          install-agent: true
+          agent: cursor
+
+  # Test 2: Custom prompt only
+  custom-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AutoAgent - Custom Only
+        uses: erans/autoagent@v1
+        with:
+          custom: |
+            Please review this pull request for:
+            1. Code quality and best practices
+            2. Security vulnerabilities  
+            3. Performance optimizations
+            4. Documentation completeness
+          action: comment
+          install-agent: true
+          agent: cursor
+
+  # Test 3: Security analysis only
+  security-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AutoAgent - Security Only
+        uses: erans/autoagent@v1
+        with:
+          rules: |
+            - owasp-check
+          action: comment
+          install-agent: true
+          agent: cursor
