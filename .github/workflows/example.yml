@@ -17,6 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run AutoAgent - Full Analysis
         uses: erans/autoagent-action@main
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
           rules: |
             - owasp-check
@@ -36,6 +38,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run AutoAgent - Custom Only
         uses: erans/autoagent-action@main
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
           custom: |
             Please review this pull request for:
@@ -54,6 +58,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run AutoAgent - Security Only
         uses: erans/autoagent-action@main
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
           rules: |
             - owasp-check

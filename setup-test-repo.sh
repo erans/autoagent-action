@@ -270,6 +270,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
         uses: erans/autoagent-action@main
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
           rules: |
             - owasp-check
