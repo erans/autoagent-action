@@ -17,7 +17,7 @@ fi
 if ! gh auth status >/dev/null 2>&1; then
     echo "❌ Not authenticated with GitHub CLI. Please run: gh auth login"
     exit 1
-fi
+fia
 
 # Get repository name from user
 read -p "Enter test repository name (default: autoagent-test): " REPO_NAME
@@ -264,7 +264,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent-action@main
         with:
           rules: |
             - owasp-check
