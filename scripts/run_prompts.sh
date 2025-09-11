@@ -117,8 +117,23 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: First 200 chars of prompt:"
                 echo "${FULL_PROMPT:0:200}"
                 echo "DEBUG: --- END PROMPT PREVIEW ---"
+                echo "DEBUG: Cursor-agent version:"
+                cursor-agent --version || echo "Version check failed"
+                echo "DEBUG: Starting cursor-agent execution..."
                 
-                OUTPUT=$(cursor-agent -p "$FULL_PROMPT" --model "$MODEL" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                # Try different approaches for cursor-agent
+                echo "DEBUG: Trying cursor-agent with -p flag..."
+                OUTPUT=$(timeout 60 cursor-agent -p "$FULL_PROMPT" --model "$MODEL" 2>&1 || echo "Error: Failed with -p flag")
+                
+                if [[ "$OUTPUT" == *"Error: Failed with -p flag"* ]]; then
+                    echo "DEBUG: -p flag failed, trying with stdin input..."
+                    OUTPUT=$(echo "$FULL_PROMPT" | timeout 60 cursor-agent --model "$MODEL" 2>&1 || echo "Error: Failed with stdin input")
+                fi
+                
+                if [[ "$OUTPUT" == *"Error: Failed with stdin input"* ]]; then
+                    echo "DEBUG: stdin input failed, trying basic command..."
+                    OUTPUT=$(timeout 60 cursor-agent "$FULL_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
+                fi
                 
                 echo "DEBUG: Raw cursor-agent output:"
                 echo "--- START RAW OUTPUT ---"
@@ -174,8 +189,21 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: First 200 chars of custom prompt:"
                 echo "${FULL_CUSTOM_PROMPT:0:200}"
                 echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
+                echo "DEBUG: Starting custom prompt execution..."
                 
-                OUTPUT=$(cursor-agent -p "$FULL_CUSTOM_PROMPT" --model "$MODEL" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                # Try different approaches for cursor-agent
+                echo "DEBUG: Trying cursor-agent with -p flag for custom prompt..."
+                OUTPUT=$(timeout 60 cursor-agent -p "$FULL_CUSTOM_PROMPT" --model "$MODEL" 2>&1 || echo "Error: Failed with -p flag")
+                
+                if [[ "$OUTPUT" == *"Error: Failed with -p flag"* ]]; then
+                    echo "DEBUG: -p flag failed, trying with stdin input for custom prompt..."
+                    OUTPUT=$(echo "$FULL_CUSTOM_PROMPT" | timeout 60 cursor-agent --model "$MODEL" 2>&1 || echo "Error: Failed with stdin input")
+                fi
+                
+                if [[ "$OUTPUT" == *"Error: Failed with stdin input"* ]]; then
+                    echo "DEBUG: stdin input failed, trying basic command for custom prompt..."
+                    OUTPUT=$(timeout 60 cursor-agent "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
+                fi
                 
                 echo "DEBUG: Raw custom prompt output:"
                 echo "--- START CUSTOM OUTPUT ---"
