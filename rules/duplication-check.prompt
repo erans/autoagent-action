@@ -1,22 +1,25 @@
-You are operating in a GitHub Actions runner.
-The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available. You have write access to repository contents and can comment on pull requests.
-
 ## Task: Code Duplication Analysis
 
-Analyze the current pull request for potential code duplication and suggest existing code that could be reused instead of writing new code.
+Analyze the **files changed/added in this pull request** for potential code duplication and suggest existing code that could be reused instead of writing new code.
 
 ### Analysis Steps
 
-1. **Identify New Code Patterns**
+1. **Identify Changed Files**
+   - First, get the list of files changed in this PR using: `git diff --name-only HEAD~1`
+   - Focus analysis only on files that were modified or added in this PR
+   - Use `git diff` to see the specific changes made
+
+2. **Identify New Code Patterns in Changed Files**
    - Look for functions, classes, methods, or code blocks that appear to be newly written
    - Focus on business logic, utility functions, data processing, and common operations
    - Pay attention to algorithms, data structures, and architectural patterns
 
-2. **Search for Similar Existing Code**
+3. **Search for Similar Existing Code**
    - Use `grep` to search for similar function names, variable names, or code patterns
    - Look for similar string literals, constants, or configuration patterns
    - Search for similar error handling, logging, or validation patterns
    - Check for similar API calls, database queries, or external service integrations
+   - **Search scope**: Focus on the entire repository but prioritize files in the same directory or related modules
 
 3. **AST-Based Analysis** (if available)
    - Use `ast-grep` or similar tools to find structurally similar code
@@ -28,10 +31,36 @@ Analyze the current pull request for potential code duplication and suggest exis
    - Look for existing utilities, helpers, or shared libraries
    - Check for similar design patterns or architectural approaches
 
+### Git Commands to Identify Changed Files
+
+```bash
+# Get list of files changed in this PR
+git diff --name-only HEAD~1
+
+# Get detailed diff of changes
+git diff HEAD~1
+
+# Get only added lines (new code)
+git diff HEAD~1 | grep "^+"
+
+# Get files changed with their status (A=added, M=modified, D=deleted)
+git diff --name-status HEAD~1
+```
+
 ### Search Commands to Use
 
 ```bash
-# Search for similar function names
+# First, get the changed files
+CHANGED_FILES=$(git diff --name-only HEAD~1)
+
+# Search for similar function names in changed files first, then broader
+for file in $CHANGED_FILES; do
+  echo "Analyzing changed file: $file"
+  # Extract function names from changed file and search for similar ones
+  grep -n "function\|def\|class\|const\|let\|var" "$file" | head -10
+done
+
+# Search for similar function names (prioritize same directory)
 grep -r "function_name_pattern" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
 
 # Search for similar string literals or constants
@@ -133,6 +162,17 @@ function validatePassword(password) {
 
 ### Focus Areas
 
+**Primary Focus (Changed Files):**
+- Analyze only the files that were modified or added in this PR
+- Look for new functions, classes, or code blocks that might duplicate existing functionality
+- Check if new code could reuse existing utilities or helpers
+
+**Secondary Focus (Repository-wide Search):**
+- Search the entire repository for similar patterns to the code in changed files
+- Prioritize files in the same directory or related modules
+- Look for existing code that could be refactored to eliminate duplication
+
+**Specific Areas to Check:**
 - **Utility Functions**: Look for common operations that could be shared
 - **Validation Logic**: Check for repeated input validation patterns
 - **Error Handling**: Identify similar error handling approaches
