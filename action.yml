@@ -48,4 +48,6 @@ runs:
     - name: Post Results as PR Comment
       if: ${{ inputs.action == 'comment' }}
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: ${{ github.action_path }}/scripts/post_comment.sh results.json

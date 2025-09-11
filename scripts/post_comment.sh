@@ -51,9 +51,19 @@ echo "Comment body prepared (${#COMMENT_BODY} characters)"
 # Post comment using GitHub CLI
 if command -v gh >/dev/null 2>&1; then
     # Set GH_TOKEN from GITHUB_TOKEN for GitHub CLI
-    export GH_TOKEN="$GITHUB_TOKEN"
-    echo "$COMMENT_BODY" | gh pr comment "$PR_NUMBER" --body -
-    echo "Comment posted successfully to PR #$PR_NUMBER"
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        export GH_TOKEN="$GITHUB_TOKEN"
+        echo "$COMMENT_BODY" | gh pr comment "$PR_NUMBER" --body -
+        echo "Comment posted successfully to PR #$PR_NUMBER"
+    else
+        echo "Error: GITHUB_TOKEN environment variable is not set."
+        echo "This action requires the GITHUB_TOKEN to post comments."
+        echo "Comment that would have been posted:"
+        echo "---"
+        echo -e "$COMMENT_BODY"
+        echo "---"
+        exit 1
+    fi
 else
     echo "Error: GitHub CLI (gh) not found. Cannot post comment."
     echo "Please ensure the GitHub CLI is available in the runner environment."
