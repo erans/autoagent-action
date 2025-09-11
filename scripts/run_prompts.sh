@@ -106,7 +106,18 @@ $(cat "$COMMENT_PROMPT_FILE")"
     case "$AGENT" in
         cursor)
             if command -v cursor-agent >/dev/null 2>&1; then
+                echo "DEBUG: Executing cursor-agent with prompt length: ${#FULL_PROMPT}"
+                echo "DEBUG: First 200 chars of prompt:"
+                echo "${FULL_PROMPT:0:200}"
+                echo "DEBUG: --- END PROMPT PREVIEW ---"
+                
                 OUTPUT=$(echo "$FULL_PROMPT" | cursor-agent --print --output-format text 2>&1 || echo "Error: Failed to execute cursor-agent")
+                
+                echo "DEBUG: Raw cursor-agent output:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
             else
                 OUTPUT="Error: cursor-agent not found. Please ensure it's installed or set install-agent: true"
             fi
@@ -151,7 +162,19 @@ $(cat "$COMMENT_PROMPT_FILE")"
     case "$AGENT" in
         cursor)
             if command -v cursor-agent >/dev/null 2>&1; then
+                echo "DEBUG: Executing custom prompt with cursor-agent"
+                echo "DEBUG: Custom prompt length: ${#FULL_CUSTOM_PROMPT}"
+                echo "DEBUG: First 200 chars of custom prompt:"
+                echo "${FULL_CUSTOM_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
+                
                 OUTPUT=$(echo "$FULL_CUSTOM_PROMPT" | cursor-agent --print --output-format text 2>&1 || echo "Error: Failed to execute cursor-agent")
+                
+                echo "DEBUG: Raw custom prompt output:"
+                echo "--- START CUSTOM OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END CUSTOM OUTPUT ---"
+                echo "DEBUG: Custom output length: ${#OUTPUT}"
             else
                 OUTPUT="Error: cursor-agent not found. Please ensure it's installed or set install-agent: true"
             fi
