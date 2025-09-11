@@ -146,6 +146,19 @@ Database queries look optimized. Consider adding indexes for the new columns.
 - For YAML parsing: `yq` (optional, falls back to `jq`)
 - For JSON parsing: `jq`
 
+## Permissions
+
+The action requires the following GitHub token permissions:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+```
+
+Add this to your workflow file to ensure the action can post comments to pull requests.
+
 ## Error Handling
 
 The action will fail gracefully with descriptive error messages for:

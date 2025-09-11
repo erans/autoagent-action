@@ -258,6 +258,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   autoagent:
     runs-on: ubuntu-latest
