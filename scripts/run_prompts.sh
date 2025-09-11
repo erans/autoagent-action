@@ -9,6 +9,9 @@ RESULT_FILE="results.json"
 # Get the action directory (where this script is located)
 ACTION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# Ensure cursor-agent is in PATH
+export PATH="$HOME/.cursor/bin:$PATH"
+
 echo "Running rules with agent: $AGENT"
 
 # Validate inputs
@@ -111,7 +114,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "${FULL_PROMPT:0:200}"
                 echo "DEBUG: --- END PROMPT PREVIEW ---"
                 
-                OUTPUT=$(echo "$FULL_PROMPT" | cursor-agent --print --output-format text 2>&1 || echo "Error: Failed to execute cursor-agent")
+                OUTPUT=$(cursor-agent -p "$FULL_PROMPT" --model gpt-4 2>&1 || echo "Error: Failed to execute cursor-agent")
                 
                 echo "DEBUG: Raw cursor-agent output:"
                 echo "--- START RAW OUTPUT ---"
@@ -168,7 +171,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "${FULL_CUSTOM_PROMPT:0:200}"
                 echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
                 
-                OUTPUT=$(echo "$FULL_CUSTOM_PROMPT" | cursor-agent --print --output-format text 2>&1 || echo "Error: Failed to execute cursor-agent")
+                OUTPUT=$(cursor-agent -p "$FULL_CUSTOM_PROMPT" --model gpt-4 2>&1 || echo "Error: Failed to execute cursor-agent")
                 
                 echo "DEBUG: Raw custom prompt output:"
                 echo "--- START CUSTOM OUTPUT ---"
