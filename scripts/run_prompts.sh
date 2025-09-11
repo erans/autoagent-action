@@ -31,7 +31,14 @@ add_result() {
     local rule="$1"
     local output="$2"
     local temp_file=$(mktemp)
-    jq --arg rule "$rule" --arg output "$output" '. + [{"rule": $rule, "output": $output}]' "$RESULT_FILE" > "$temp_file"
+    
+    # Debug: Show what we're adding
+    echo "Adding result for rule: $rule"
+    echo "Output length: ${#output} characters"
+    echo "First 100 chars: ${output:0:100}"
+    
+    # Use raw input to preserve newlines and special characters
+    jq --arg rule "$rule" --rawfile output <(printf '%s' "$output") '. + [{"rule": $rule, "output": $output}]' "$RESULT_FILE" > "$temp_file"
     mv "$temp_file" "$RESULT_FILE"
 }
 

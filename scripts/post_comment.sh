@@ -49,7 +49,12 @@ while read -r LINE; do
     RULE=$(echo "$LINE" | jq -r '.rule')
     OUTPUT=$(echo "$LINE" | jq -r '.output')
     
-    # Escape markdown special characters in output
+    # Debug: Show what we're processing
+    echo "Processing rule: $RULE"
+    echo "Output length: ${#OUTPUT} characters"
+    echo "First 100 chars: ${OUTPUT:0:100}"
+    
+    # Escape markdown special characters in output (less aggressive)
     OUTPUT_ESCAPED=$(echo "$OUTPUT" | sed 's/\\/\\\\/g' | sed 's/`/\\`/g' | sed 's/\*/\\*/g' | sed 's/_/\\_/g' | sed 's/\[/\\[/g' | sed 's/\]/\\]/g')
     
     COMMENT_BODY+="**Rule:** \`$RULE\`\n"
