@@ -102,10 +102,10 @@ if [ -n "$RULES_ARRAY" ]; then
     fi
 
     echo "Executing rule: $RULE"
-    echo "DEBUG: About to load base prompt file: $BASE_PROMPT_FILE"
     
     # Load base prompt with GitHub Actions context
     BASE_PROMPT_FILE="$ACTION_DIR/rules/base.prompt"
+    echo "DEBUG: About to load base prompt file: $BASE_PROMPT_FILE"
     if [ ! -f "$BASE_PROMPT_FILE" ]; then
         echo "Error: Base prompt file not found: $BASE_PROMPT_FILE"
         exit 1
