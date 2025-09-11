@@ -80,17 +80,38 @@ if command -v gh >/dev/null 2>&1; then
     if [ -n "${GITHUB_TOKEN:-}" ]; then
         export GH_TOKEN="$GITHUB_TOKEN"
         
-        # Create temporary file for comment body to handle multi-line content properly
-        COMMENT_FILE=$(mktemp)
-        printf '%s' "$COMMENT_BODY" > "$COMMENT_FILE"
+        # Create temporary file for comment body (similar to cursor-agent approach)
+        COMMENT_FILE_TEMP=$(mktemp)
+        echo "DEBUG: Creating temporary comment file: $COMMENT_FILE_TEMP"
         
-        # Post comment using file input
-        gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"
+        # Write comment body to temporary file
+        printf '%s' "$COMMENT_BODY" > "$COMMENT_FILE_TEMP"
+        
+        # Debug: Show file size and first few lines
+        echo "DEBUG: Comment file size: $(wc -c < "$COMMENT_FILE_TEMP") characters"
+        echo "DEBUG: First 200 chars of comment file:"
+        head -c 200 "$COMMENT_FILE_TEMP"
+        echo ""
+        echo "DEBUG: --- END COMMENT FILE PREVIEW ---"
+        
+        # Post comment using file input (pipe approach like cursor-agent)
+        echo "DEBUG: Posting comment using: gh pr comment $PR_NUMBER --body-file $COMMENT_FILE_TEMP"
+        if gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE_TEMP"; then
+            echo "Comment posted successfully to PR #$PR_NUMBER"
+        else
+            echo "Error: Failed to post comment to PR #$PR_NUMBER"
+            echo "Comment content that failed to post:"
+            echo "---"
+            cat "$COMMENT_FILE_TEMP"
+            echo "---"
+            rm -f "$COMMENT_FILE_TEMP"
+            exit 1
+        fi
         
         # Clean up temporary file
-        rm -f "$COMMENT_FILE"
+        rm -f "$COMMENT_FILE_TEMP"
+        echo "DEBUG: Cleaned up temporary comment file"
         
-        echo "Comment posted successfully to PR #$PR_NUMBER"
     else
         echo "Error: GITHUB_TOKEN environment variable is not set."
         echo "This action requires the GITHUB_TOKEN to post comments."
