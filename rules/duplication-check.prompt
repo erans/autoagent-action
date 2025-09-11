@@ -1,0 +1,153 @@
+You are operating in a GitHub Actions runner.
+The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available. You have write access to repository contents and can comment on pull requests.
+
+## Task: Code Duplication Analysis
+
+Analyze the current pull request for potential code duplication and suggest existing code that could be reused instead of writing new code.
+
+### Analysis Steps
+
+1. **Identify New Code Patterns**
+   - Look for functions, classes, methods, or code blocks that appear to be newly written
+   - Focus on business logic, utility functions, data processing, and common operations
+   - Pay attention to algorithms, data structures, and architectural patterns
+
+2. **Search for Similar Existing Code**
+   - Use `grep` to search for similar function names, variable names, or code patterns
+   - Look for similar string literals, constants, or configuration patterns
+   - Search for similar error handling, logging, or validation patterns
+   - Check for similar API calls, database queries, or external service integrations
+
+3. **AST-Based Analysis** (if available)
+   - Use `ast-grep` or similar tools to find structurally similar code
+   - Look for similar function signatures, class structures, or control flow patterns
+   - Identify common patterns like validation, serialization, or data transformation
+
+4. **Semantic Code Search**
+   - Search for code that solves similar problems or implements similar functionality
+   - Look for existing utilities, helpers, or shared libraries
+   - Check for similar design patterns or architectural approaches
+
+### Search Commands to Use
+
+```bash
+# Search for similar function names
+grep -r "function_name_pattern" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
+
+# Search for similar string literals or constants
+grep -r "string_literal" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
+
+# Search for similar error handling patterns
+grep -r "try.*catch\|if.*error\|throw.*Error" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
+
+# Search for similar API patterns
+grep -r "fetch\|axios\|request\|http" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
+
+# Search for similar database patterns
+grep -r "SELECT\|INSERT\|UPDATE\|DELETE\|query\|execute" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
+
+# Search for similar validation patterns
+grep -r "validate\|check\|verify\|assert" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
+
+# Search for similar logging patterns
+grep -r "log\|console\|print\|debug\|info\|warn\|error" . --include="*.js" --include="*.ts" --include="*.py" --include="*.java" --include="*.go"
+```
+
+### Analysis Criteria
+
+**High Priority Duplications:**
+- Identical or nearly identical functions with different names
+- Similar business logic implemented multiple times
+- Duplicate validation, error handling, or utility functions
+- Repeated configuration or setup code
+- Similar data transformation or processing logic
+
+**Medium Priority Duplications:**
+- Similar patterns with minor variations
+- Code that could be abstracted into a shared utility
+- Repeated architectural patterns
+- Similar API integration patterns
+
+**Low Priority Duplications:**
+- Similar variable names or constants
+- Similar comments or documentation
+- Similar import statements or dependencies
+
+### Output Format
+
+For each potential duplication found:
+
+1. **Location**: File and line numbers of the new code
+2. **Similar Code**: File and line numbers of existing similar code
+3. **Similarity Level**: High/Medium/Low
+4. **Suggestion**: Specific recommendation for refactoring or reuse
+5. **Code Snippets**: Show both the new code and similar existing code
+6. **Refactoring Steps**: Concrete steps to eliminate duplication
+
+### Example Output
+
+```markdown
+## 🔍 Code Duplication Analysis
+
+### High Priority: Duplicate User Validation
+
+**New Code**: `src/auth/validator.js:15-25`
+**Similar Code**: `src/utils/validation.js:45-55`
+
+**Similarity**: High - Nearly identical validation logic
+
+**New Code:**
+```javascript
+function validateUser(user) {
+  if (!user.email || !user.email.includes('@')) {
+    throw new Error('Invalid email');
+  }
+  if (!user.password || user.password.length < 8) {
+    throw new Error('Password too short');
+  }
+}
+```
+
+**Existing Code:**
+```javascript
+function validateEmail(email) {
+  if (!email || !email.includes('@')) {
+    throw new Error('Invalid email');
+  }
+}
+
+function validatePassword(password) {
+  if (!password || password.length < 8) {
+    throw new Error('Password too short');
+  }
+}
+```
+
+**Suggestion**: Use existing validation functions instead of duplicating logic.
+
+**Refactoring Steps**:
+1. Import `validateEmail` and `validatePassword` from `src/utils/validation.js`
+2. Replace custom validation with: `validateEmail(user.email); validatePassword(user.password);`
+3. Remove duplicate validation function
+```
+
+### Focus Areas
+
+- **Utility Functions**: Look for common operations that could be shared
+- **Validation Logic**: Check for repeated input validation patterns
+- **Error Handling**: Identify similar error handling approaches
+- **API Integration**: Look for repeated external service calls
+- **Data Processing**: Find similar data transformation logic
+- **Configuration**: Check for repeated setup or configuration code
+
+### Tools to Use
+
+- `grep` for text-based pattern matching
+- `find` to locate files by type or name
+- `git log` to see recent changes and understand context
+- `git blame` to understand who wrote similar code
+- Manual code review for semantic similarity
+
+**IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
+
+**WHEN YOU ARE DONE EXIT**

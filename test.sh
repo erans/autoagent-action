@@ -14,6 +14,7 @@ required_files=(
     "rules/owasp-check.prompt"
     "rules/code-review.prompt"
     "rules/refactor-suggestions.prompt"
+    "rules/duplication-check.prompt"
     "rules/comment.prompt"
     "README.md"
 )

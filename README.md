@@ -60,6 +60,7 @@ jobs:
             - owasp-check
             - code-review
             - refactor-suggestions
+            - duplication-check
           custom: |
             Please analyze the database schema changes and ensure they follow our naming conventions.
             Also check for any potential performance issues with the new queries.
@@ -113,6 +114,7 @@ jobs:
 | `owasp-check` | Security scan based on OWASP Top 10 guidelines |
 | `code-review` | Performs a general AI-driven code review |
 | `refactor-suggestions` | Detects code smells and suggests refactors |
+| `duplication-check` | Identifies code duplication and suggests existing code reuse |
 
 ## Output
 
