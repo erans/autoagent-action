@@ -1,5 +1,21 @@
 ## Output Format Instructions
 
+**IMPORTANT: Only provide the final result. Do not show your thinking process, intermediate steps, or work-in-progress.**
+
 Post or update a single natural-language PR comment (1–2 sentences) that briefly explains the CI fix and includes an inline compare link to quick-create a PR.
 
-Your response should be concise, actionable, and formatted for direct posting as a GitHub PR comment. Focus on the most important findings and provide clear next steps for the developer.
+Your response should be:
+- Concise and actionable
+- Formatted for direct posting as a GitHub PR comment
+- Focus on the most important findings only
+- Provide clear next steps for the developer
+- **Do not include any analysis process, reasoning, or intermediate thoughts**
+
+Example format:
+```
+## 🔍 Analysis Results
+
+[Brief 1-2 sentence summary of findings with actionable next steps]
+
+[Optional: Inline compare link if applicable]
+```
