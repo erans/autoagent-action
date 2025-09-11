@@ -50,6 +50,8 @@ echo "Comment body prepared (${#COMMENT_BODY} characters)"
 
 # Post comment using GitHub CLI
 if command -v gh >/dev/null 2>&1; then
+    # Set GH_TOKEN from GITHUB_TOKEN for GitHub CLI
+    export GH_TOKEN="$GITHUB_TOKEN"
     echo "$COMMENT_BODY" | gh pr comment "$PR_NUMBER" --body -
     echo "Comment posted successfully to PR #$PR_NUMBER"
 else
