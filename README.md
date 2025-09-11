@@ -147,6 +147,11 @@ Database queries look optimized. Consider adding indexes for the new columns.
 - For JSON parsing: `jq`
 - **Cursor API Key** - Required for cursor-agent to work (add as repository secret `CURSOR_API_KEY`)
 
+## Environment Variables
+
+- **`CURSOR_API_KEY`** - Required for Cursor CLI authentication
+- **`MODEL`** - Optional AI model to use (defaults to `gpt-5`)
+
 ## Permissions
 
 The action requires the following GitHub token permissions:

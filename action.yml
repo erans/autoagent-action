@@ -43,6 +43,8 @@ runs:
 
     - name: Execute Rules and Custom Prompt
       shell: bash
+      env:
+        MODEL: ${{ env.MODEL }}
       run: ${{ github.action_path }}/scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}"
 
     - name: Post Results as PR Comment
