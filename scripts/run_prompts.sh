@@ -147,27 +147,36 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Which cursor-agent: $(which cursor-agent)"
                 echo "DEBUG: Starting cursor-agent execution..."
                 
-                # Try the correct cursor-agent syntax
-                echo "DEBUG: Using correct cursor-agent syntax..."
-                echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text --model \"$MODEL\" \"[PROMPT]\""
+                # Create a temporary file for the prompt to handle multi-line text properly
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+                echo "DEBUG: Prompt file size: $(wc -c < "$PROMPT_FILE_TEMP") bytes"
+                
+                # Try the correct cursor-agent syntax with file input
+                echo "DEBUG: Using correct cursor-agent syntax with file input..."
+                echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text --model \"$MODEL\" < \"$PROMPT_FILE_TEMP\""
                 echo "DEBUG: Environment check - CURSOR_API_KEY length: ${#CURSOR_API_KEY}"
                 
-                # Try with explicit API key
-                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text --model "$MODEL" "$FULL_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                # Try with explicit API key and file input
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text --model "$MODEL" < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
                 
                 # If that fails, try without model flag
                 if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
                     echo "DEBUG: Model flag failed, trying without model..."
-                    echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text \"[PROMPT]\""
-                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text "$FULL_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                    echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text < \"$PROMPT_FILE_TEMP\""
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
                 fi
                 
                 # If that fails, try with agent command
                 if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
                     echo "DEBUG: Print flag failed, trying with agent command..."
-                    echo "DEBUG: Command: timeout 60 cursor-agent agent --print --output-format text \"[PROMPT]\""
-                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent agent --print --output-format text "$FULL_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
+                    echo "DEBUG: Command: timeout 60 cursor-agent agent --print --output-format text < \"$PROMPT_FILE_TEMP\""
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent agent --print --output-format text < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: All cursor-agent methods failed")
                 fi
+                
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
                 
                 echo "DEBUG: Raw cursor-agent output:"
                 echo "--- START RAW OUTPUT ---"
@@ -225,24 +234,33 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
                 echo "DEBUG: Starting custom prompt execution..."
                 
-                # Try the correct cursor-agent syntax for custom prompt
-                echo "DEBUG: Using correct cursor-agent syntax for custom prompt..."
-                echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text --model \"$MODEL\" \"[CUSTOM_PROMPT]\""
+                # Create a temporary file for the custom prompt to handle multi-line text properly
+                CUSTOM_PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_PROMPT" > "$CUSTOM_PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
+                echo "DEBUG: Custom prompt file size: $(wc -c < "$CUSTOM_PROMPT_FILE_TEMP") bytes"
                 
-                # Try with explicit API key
-                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text --model "$MODEL" "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                # Try the correct cursor-agent syntax for custom prompt with file input
+                echo "DEBUG: Using correct cursor-agent syntax for custom prompt with file input..."
+                echo "DEBUG: Command: timeout 60 cursor-agent --print --output-format text --model \"$MODEL\" < \"$CUSTOM_PROMPT_FILE_TEMP\""
+                
+                # Try with explicit API key and file input
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text --model "$MODEL" < "$CUSTOM_PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
                 
                 # If that fails, try without model flag
                 if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
                     echo "DEBUG: Model flag failed for custom prompt, trying without model..."
-                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent --print --output-format text < "$CUSTOM_PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
                 fi
                 
                 # If that fails, try with agent command
                 if [[ "$OUTPUT" == *"Error: Failed to execute cursor-agent"* ]]; then
                     echo "DEBUG: Print flag failed for custom prompt, trying with agent command..."
-                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent agent --print --output-format text "$FULL_CUSTOM_PROMPT" 2>&1 || echo "Error: All cursor-agent methods failed")
+                    OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 60 cursor-agent agent --print --output-format text < "$CUSTOM_PROMPT_FILE_TEMP" 2>&1 || echo "Error: All cursor-agent methods failed")
                 fi
+                
+                # Clean up temporary file
+                rm -f "$CUSTOM_PROMPT_FILE_TEMP"
                 
                 echo "DEBUG: Raw custom prompt output:"
                 echo "--- START CUSTOM OUTPUT ---"
