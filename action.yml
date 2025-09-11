@@ -50,4 +50,8 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_EVENT_NUMBER: ${{ github.event.number }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_EVENT_NAME: ${{ github.event_name }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
       run: ${{ github.action_path }}/scripts/post_comment.sh results.json

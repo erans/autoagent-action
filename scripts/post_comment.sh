@@ -15,15 +15,29 @@ if [ ! -s "$RESULT_FILE" ] || [ "$(jq length "$RESULT_FILE")" -eq 0 ]; then
     exit 0
 fi
 
-# Extract PR number from GitHub ref
-PR_NUMBER="${GITHUB_REF##*/}"
-if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "refs/heads/main" ] || [ "$PR_NUMBER" = "refs/heads/master" ]; then
-    echo "Error: Could not extract PR number from GITHUB_REF: $GITHUB_REF"
+# Extract PR number from GitHub Actions environment
+if [ -n "${GITHUB_EVENT_NUMBER:-}" ]; then
+    # Use the event number if available (for pull_request events)
+    PR_NUMBER="$GITHUB_EVENT_NUMBER"
+elif [ -n "${GITHUB_REF#refs/pull/}" ] && [ "$GITHUB_REF" != "${GITHUB_REF#refs/pull/}" ]; then
+    # Extract from refs/pull/NUMBER/merge format
+    PR_NUMBER="${GITHUB_REF#refs/pull/}"
+    PR_NUMBER="${PR_NUMBER%/merge}"
+else
+    echo "Error: Could not extract PR number from GitHub environment"
+    echo "GITHUB_EVENT_NUMBER: ${GITHUB_EVENT_NUMBER:-not set}"
+    echo "GITHUB_REF: ${GITHUB_REF:-not set}"
+    echo "GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME:-not set}"
     echo "This action should only run on pull request events"
     exit 1
 fi
 
 echo "Posting results to PR #$PR_NUMBER"
+echo "Debug info:"
+echo "  GITHUB_EVENT_NUMBER: ${GITHUB_EVENT_NUMBER:-not set}"
+echo "  GITHUB_REF: ${GITHUB_REF:-not set}"
+echo "  GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME:-not set}"
+echo "  GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-not set}"
 
 # Build comment body
 COMMENT_BODY="### 🤖 AutoAgent Results
