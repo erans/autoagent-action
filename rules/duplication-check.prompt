@@ -189,5 +189,3 @@ function validatePassword(password) {
 - Manual code review for semantic similarity
 
 **IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
-
-**WHEN YOU ARE DONE EXIT**

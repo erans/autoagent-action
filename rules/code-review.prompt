@@ -51,5 +51,3 @@ For each issue found, provide:
 If the code looks good, acknowledge the positive aspects and any particularly well-implemented patterns.
 
 **Output Format**: Provide a concise, actionable summary focused on the most important code quality issues only.
-
-**WHEN YOU ARE DONE EXIT**

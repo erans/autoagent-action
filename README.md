@@ -21,6 +21,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   autoagent:
     runs-on: ubuntu-latest
@@ -28,6 +33,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
         uses: erans/autoagent@v1
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
           rules: |
             - owasp-check
@@ -48,6 +55,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   autoagent:
     runs-on: ubuntu-latest
@@ -55,6 +67,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
         uses: erans/autoagent@v1
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
           rules: |
             - owasp-check
@@ -78,6 +92,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   autoagent:
     runs-on: ubuntu-latest
@@ -85,6 +104,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
         uses: erans/autoagent@v1
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
           custom: |
             Please review this pull request for:
@@ -171,11 +192,26 @@ Add this to your workflow file to ensure the action can post comments to pull re
 
 ### 1. Add Cursor API Key
 
-1. Go to your repository settings
-2. Navigate to **Secrets and variables** → **Actions**
-3. Click **New repository secret**
-4. Name: `CURSOR_API_KEY`
-5. Value: Your Cursor API key (get it from [Cursor Settings](https://cursor.sh/settings))
+The action requires the `CURSOR_API_KEY` environment variable to be set as a repository secret.
+
+#### Steps to add the secret:
+
+1. **Get your Cursor API key**:
+   - Open Cursor IDE
+   - Go to Settings (Cmd/Ctrl + ,)
+   - Navigate to **General** → **Account**
+   - Copy your API key from the account section
+
+2. **Add the secret to your repository**:
+   - Go to your GitHub repository
+   - Click **Settings** (in the repository toolbar)
+   - In the left sidebar, click **Secrets and variables** → **Actions**
+   - Click **New repository secret**
+   - Name: `CURSOR_API_KEY`
+   - Value: Paste your Cursor API key
+   - Click **Add secret**
+
+**Important**: The API key must be added as a repository secret, not as an environment variable in the workflow file directly.
 
 ### 2. Add Workflow Permissions
 

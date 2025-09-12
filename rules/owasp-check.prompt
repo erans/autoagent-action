@@ -32,5 +32,3 @@ For each issue found, provide:
 If no security issues are found, confirm that the code appears to follow OWASP security best practices.
 
 **Output Format**: Provide a concise, actionable summary focused on the most critical security findings only.
-
-**WHEN YOU ARE DONE EXIT**
