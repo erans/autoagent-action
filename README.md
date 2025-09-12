@@ -1,6 +1,6 @@
 # AutoAgent
 
-> **⚠️ Experimental Project**: This project was created during a hackathon at the Cursor offices on September 10, 2024. Use at your own risk. Future updates will focus on making it production CI/CD ready. 🚧  - Thank you to the Curosr team for hosting!
+> **⚠️ Experimental Project**: This project was created during a hackathon at the Cursor offices on September 10, 2025. Use at your own risk. Future updates will focus on making it production CI/CD ready. 🚧  - Thank you to the Curosr team for hosting!
 
 A composable GitHub Action that integrates with AI agents like [Cursor CLI](https://cursor.sh) to run prompts on a repository as part of Pull Request workflows.
 
