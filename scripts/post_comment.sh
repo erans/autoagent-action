@@ -54,14 +54,11 @@ while read -r LINE; do
     echo "Output length: ${#OUTPUT} characters"
     echo "First 100 chars: ${OUTPUT:0:100}"
     
-    # Escape only the most problematic characters for GitHub comments
-    # Don't escape backslashes as they might be needed for formatting
-    OUTPUT_ESCAPED=$(echo "$OUTPUT" | sed 's/`/\\`/g' | sed 's/\*/\\*/g' | sed 's/_/\\_/g' | sed 's/\[/\\[/g' | sed 's/\]/\\]/g')
-    
+    # Don't escape the output since agents return markdown-formatted text
+    # Just use the raw output to preserve markdown formatting
+
     COMMENT_BODY+="**Rule:** \`$RULE\`"$'\n'
-    COMMENT_BODY+="\`\`\`"$'\n'
-    COMMENT_BODY+="$OUTPUT_ESCAPED"$'\n'
-    COMMENT_BODY+="\`\`\`"$'\n\n'
+    COMMENT_BODY+="$OUTPUT"$'\n\n'
 done < <(jq -c '.[]' "$RESULT_FILE")
 
 # Add footer

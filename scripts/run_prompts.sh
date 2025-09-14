@@ -52,16 +52,42 @@ if [ "$SCOPE" = "all" ]; then
     CHANGED_FILES=""
     echo "DEBUG: Scope is 'all' - analyzing entire codebase"
 else
-    CHANGED_FILES=$(git diff --name-only origin/main..HEAD 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
-    if [ -n "$CHANGED_FILES" ]; then
-        FILE_CONTEXT="Focus ONLY on these files changed in this PR: $CHANGED_FILES"
-        echo "DEBUG: Scope is 'changed' - found changed files: $CHANGED_FILES"
+    echo "DEBUG: Scope is 'changed' - running git diff commands to detect changed files"
+
+    # Try different git diff commands and show debug output
+    echo "DEBUG: Trying git diff --name-only origin/main..HEAD"
+    CHANGED_FILES=$(git diff --name-only origin/main..HEAD 2>&1) || {
+        echo "DEBUG: First git diff command failed with output: $CHANGED_FILES"
+        echo "DEBUG: Trying git diff --name-only HEAD~1 HEAD"
+        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>&1) || {
+            echo "DEBUG: Second git diff command failed with output: $CHANGED_FILES"
+            CHANGED_FILES=""
+        }
+    }
+
+    echo "DEBUG: Raw git diff output:"
+    echo "--- START GIT DIFF OUTPUT ---"
+    echo "$CHANGED_FILES"
+    echo "--- END GIT DIFF OUTPUT ---"
+
+    # Clean up the output (remove error messages, keep only filenames)
+    CHANGED_FILES_CLEAN=$(echo "$CHANGED_FILES" | grep -v "^fatal:" | grep -v "^warning:" | grep -v "^error:" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+
+    if [ -n "$CHANGED_FILES_CLEAN" ]; then
+        FILE_CONTEXT="Focus ONLY on these files changed in this PR: $CHANGED_FILES_CLEAN"
+        echo "DEBUG: Scope is 'changed' - found changed files: $CHANGED_FILES_CLEAN"
+        echo "DEBUG: Number of changed files: $(echo "$CHANGED_FILES_CLEAN" | wc -w)"
     else
         FILE_CONTEXT="No changed files detected. Analyze the current repository state."
         echo "DEBUG: Scope is 'changed' but no changed files detected"
+        echo "DEBUG: Git repository status:"
+        git status --porcelain 2>&1 || echo "DEBUG: git status failed"
+        echo "DEBUG: Git log (last 3 commits):"
+        git log --oneline -3 2>&1 || echo "DEBUG: git log failed"
     fi
+    CHANGED_FILES="$CHANGED_FILES_CLEAN"
 fi
-echo "DEBUG: File context: $FILE_CONTEXT"
+echo "DEBUG: Final file context: $FILE_CONTEXT"
 
 # Validate inputs
 if [ -z "$RULES" ] && [ -z "$CUSTOM_PROMPT" ]; then
