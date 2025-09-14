@@ -54,14 +54,26 @@ if [ "$SCOPE" = "all" ]; then
 else
     echo "DEBUG: Scope is 'changed' - running git diff commands to detect changed files"
 
-    # Try different git diff commands and show debug output
-    echo "DEBUG: Trying git diff --name-only origin/main..HEAD"
-    CHANGED_FILES=$(git diff --name-only origin/main..HEAD 2>&1) || {
-        echo "DEBUG: First git diff command failed with output: $CHANGED_FILES"
-        echo "DEBUG: Trying git diff --name-only HEAD~1 HEAD"
-        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>&1) || {
-            echo "DEBUG: Second git diff command failed with output: $CHANGED_FILES"
-            CHANGED_FILES=""
+    # Try multiple strategies to detect ALL changed files in the PR
+    echo "DEBUG: Trying git diff --name-only origin/main...HEAD (three dots for merge-base)"
+    CHANGED_FILES=$(git diff --name-only origin/main...HEAD 2>&1) || {
+        echo "DEBUG: Three-dot diff failed with output: $CHANGED_FILES"
+        echo "DEBUG: Trying git diff --name-only origin/main..HEAD (two dots)"
+        CHANGED_FILES=$(git diff --name-only origin/main..HEAD 2>&1) || {
+            echo "DEBUG: Two-dot diff failed with output: $CHANGED_FILES"
+            echo "DEBUG: Trying git diff --name-only main...HEAD"
+            CHANGED_FILES=$(git diff --name-only main...HEAD 2>&1) || {
+                echo "DEBUG: main...HEAD diff failed with output: $CHANGED_FILES"
+                echo "DEBUG: Trying git diff --name-only main..HEAD"
+                CHANGED_FILES=$(git diff --name-only main..HEAD 2>&1) || {
+                    echo "DEBUG: main..HEAD diff failed with output: $CHANGED_FILES"
+                    echo "DEBUG: Fallback: trying git diff --name-only HEAD~1 HEAD"
+                    CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>&1) || {
+                        echo "DEBUG: Final fallback failed with output: $CHANGED_FILES"
+                        CHANGED_FILES=""
+                    }
+                }
+            }
         }
     }
 
