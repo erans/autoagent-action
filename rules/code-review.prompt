@@ -1,53 +1,161 @@
 Perform a comprehensive code review focusing on the following aspects:
 
-## Code Quality
-- **Readability**: Is the code clear, well-structured, and easy to understand?
-- **Naming**: Are variable, function, and class names descriptive and follow naming conventions?
-- **Comments**: Are there appropriate comments explaining complex logic?
-- **Documentation**: Is the code properly documented for future maintainers?
+## Code Quality & Readability
 
-## Architecture & Design
-- **SOLID Principles**: Does the code follow Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles?
-- **Design Patterns**: Are appropriate design patterns used where beneficial?
-- **Separation of Concerns**: Is business logic properly separated from presentation and data access layers?
-- **Modularity**: Is the code well-modularized and reusable?
+### **Naming Conventions**
+- **Variable Names**: Descriptive, avoid abbreviations (use `userCount` not `usrCnt`)
+- **Function Names**: Verb-noun patterns, clear intent (use `calculateTotalPrice()` not `calc()`)
+- **Class Names**: Nouns representing entities, PascalCase
+- **Constants**: UPPER_SNAKE_CASE for true constants
+- **Boolean Variables**: Use is/has/can prefixes (`isActive`, `hasPermission`)
 
-## Performance
-- **Efficiency**: Are there any performance bottlenecks or inefficient algorithms?
-- **Memory Usage**: Are there potential memory leaks or excessive memory consumption?
-- **Database Queries**: Are database queries optimized and not causing N+1 problems?
-- **Caching**: Could appropriate caching improve performance?
+### **Code Structure & Organization**
+- **Function Length**: Functions should be < 50 lines, ideally < 20
+- **Cognitive Complexity**: Avoid deeply nested conditions (> 3 levels)
+- **Single Responsibility**: Each function should do one thing well
+- **Magic Numbers**: Replace with named constants
+- **Code Comments**: Explain WHY, not WHAT; avoid redundant comments
 
-## Error Handling
-- **Exception Handling**: Are exceptions properly caught and handled?
-- **Input Validation**: Is user input properly validated and sanitized?
-- **Edge Cases**: Are edge cases and error conditions properly handled?
-- **Logging**: Is appropriate logging in place for debugging and monitoring?
+### **Language-Specific Conventions**
+- **JavaScript**: Use const/let appropriately, prefer arrow functions for callbacks
+- **Python**: Follow PEP 8, use type hints, proper docstrings
+- **Java**: Follow Oracle conventions, proper access modifiers
+- **C#**: PascalCase for public members, camelCase for private
 
-## Testing
-- **Test Coverage**: Is the code adequately tested?
-- **Test Quality**: Are tests meaningful and not just testing implementation details?
-- **Testability**: Is the code designed to be easily testable?
+## Architecture & Design Patterns
 
-## Security
-- **Input Sanitization**: Is all user input properly sanitized?
-- **Authentication & Authorization**: Are proper security measures in place?
-- **Data Protection**: Is sensitive data properly protected?
+### **SOLID Principles Analysis**
+- **Single Responsibility**: Classes/functions with single, well-defined purpose
+- **Open/Closed**: Code open for extension, closed for modification
+- **Liskov Substitution**: Subtypes should be substitutable for base types
+- **Interface Segregation**: Prefer specific interfaces over general ones
+- **Dependency Inversion**: Depend on abstractions, not concretions
 
-## Maintainability
-- **Code Duplication**: Is there any unnecessary code duplication?
-- **Complexity**: Is the code complexity reasonable and manageable?
-- **Dependencies**: Are dependencies appropriate and up-to-date?
+### **Design Pattern Usage**
+- **Creational**: Factory, Builder, Singleton (where appropriate)
+- **Structural**: Adapter, Decorator, Facade for complex integrations
+- **Behavioral**: Strategy, Observer, Command for flexible designs
+- **Anti-patterns**: God objects, spaghetti code, magic strings
+
+### **Code Organization**
+- **Layer Separation**: Presentation, business logic, data access layers
+- **Dependency Management**: Proper dependency injection, loose coupling
+- **Module Cohesion**: Related functionality grouped together
+
+## Performance & Efficiency
+
+### **Algorithmic Efficiency**
+- **Time Complexity**: O(n²) loops, inefficient searching/sorting
+- **Space Complexity**: Unnecessary object creation, memory leaks
+- **Data Structures**: Appropriate choice (HashMap vs ArrayList, etc.)
+
+### **Database Performance**
+- **N+1 Queries**: Multiple database calls in loops
+- **Missing Indexes**: Queries without proper indexing
+- **Query Optimization**: Unnecessary joins, SELECT * usage
+- **Connection Management**: Proper connection pooling
+
+### **Resource Management**
+- **Memory Leaks**: Unclosed resources, event listener leaks
+- **Caching Strategies**: Appropriate use of memoization, HTTP caching
+- **Lazy Loading**: Load data only when needed
+- **Batch Processing**: Process collections efficiently
+
+### **Frontend Performance** (if applicable)
+- **Bundle Size**: Unnecessary dependencies, code splitting
+- **Rendering**: Avoid unnecessary re-renders, virtual scrolling
+- **Network**: API call optimization, image optimization
+
+## Error Handling & Resilience
+
+### **Exception Management**
+- **Specific Exceptions**: Catch specific exceptions, not generic ones
+- **Error Propagation**: Proper exception bubbling vs. handling
+- **Resource Cleanup**: Finally blocks, using statements, try-with-resources
+- **Graceful Degradation**: Fallback mechanisms for failures
+
+### **Input Validation & Sanitization**
+- **Client-Side Validation**: User experience, not security
+- **Server-Side Validation**: Always validate on the server
+- **Sanitization**: XSS prevention, SQL injection prevention
+- **Type Safety**: Strong typing, null checks
+
+### **Logging & Monitoring**
+- **Log Levels**: Appropriate use of DEBUG, INFO, WARN, ERROR
+- **Structured Logging**: JSON format, searchable logs
+- **No Sensitive Data**: Avoid logging passwords, tokens
+- **Performance Logging**: Track slow operations, database queries
+
+## Testing & Quality Assurance
+
+### **Test Coverage Analysis**
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test component interactions
+- **Edge Cases**: Boundary conditions, null values, empty collections
+- **Happy Path vs Error Path**: Test both success and failure scenarios
+
+### **Test Quality**
+- **Test Naming**: Descriptive test names explaining scenarios
+- **Arrange-Act-Assert**: Clear test structure
+- **Test Independence**: Tests shouldn't depend on each other
+- **Mocking**: Proper use of mocks vs. stubs vs. fakes
+
+### **Testability**
+- **Dependency Injection**: Make dependencies mockable
+- **Pure Functions**: Functions without side effects
+- **Avoid Static Dependencies**: Hard to test static calls
+- **Seams**: Points where behavior can be changed for testing
+
+## Security Best Practices
+
+### **Authentication & Authorization**
+- **JWT Security**: Proper secret management, expiration, validation
+- **Session Management**: Secure session cookies, timeout, regeneration
+- **Password Security**: Hashing, salting, strength requirements
+- **Multi-factor Authentication**: Implementation for sensitive operations
+
+### **Data Protection**
+- **Encryption**: At rest and in transit, proper key management
+- **Sensitive Data Handling**: PII protection, data minimization
+- **HTTPS Enforcement**: TLS configuration, certificate validation
+- **CORS Configuration**: Proper origin restrictions
+
+### **Input Security**
+- **Validation**: Whitelist validation, input length limits
+- **Sanitization**: HTML/SQL/NoSQL injection prevention
+- **File Uploads**: Type validation, size limits, virus scanning
+- **API Security**: Rate limiting, API key management
+
+## Documentation & Maintainability
+
+### **Code Documentation**
+- **API Documentation**: Clear endpoint descriptions, examples
+- **README Files**: Setup instructions, usage examples
+- **Code Comments**: Explain business logic, not obvious code
+- **Architecture Documentation**: High-level design decisions
+
+### **Dependency Management**
+- **Version Pinning**: Lock file usage, security updates
+- **Unused Dependencies**: Remove unnecessary packages
+- **License Compatibility**: Check license conflicts
+- **Vulnerability Scanning**: Regular security audits
+
+### **Technical Debt Management**
+- **TODO Comments**: Track with tickets, not just comments
+- **Deprecated Code**: Migration plans, sunset timelines
+- **Code Metrics**: Cyclomatic complexity, maintainability index
+- **Refactoring Opportunities**: Identify before they become problems
 
 **IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
 
 For each issue found, provide:
-- File and line number
-- Specific concern or improvement suggestion
-- Impact level (High/Medium/Low)
-- Recommended action
-- Code example if applicable
+- **File and line number** where the issue exists
+- **Issue Category** (Code Quality, Performance, Security, etc.)
+- **Specific concern** or improvement suggestion
+- **Impact level** (High/Medium/Low) based on code maintainability and correctness
+- **Recommended action** with specific steps to fix
+- **Code example** showing the problematic pattern and suggested improvement
 
-If the code looks good, acknowledge the positive aspects and any particularly well-implemented patterns.
+If the code demonstrates good practices, acknowledge the positive aspects and highlight well-implemented patterns.
 
-**Output Format**: Provide a concise, actionable summary focused on the most important code quality issues only.
+**Output Format**: Provide a structured, actionable summary prioritizing the most impactful code quality improvements first, with clear guidance for each finding.

@@ -423,11 +423,12 @@ jobs:
 
 | Rule Name | Description |
 |-----------|-------------|
-| `owasp-check` | Security scan based on OWASP Top 10 guidelines |
-| `sql-injection` | Comprehensive SQL injection vulnerability analysis |
-| `code-review` | Performs a general AI-driven code review |
-| `refactor-suggestions` | Detects code smells and suggests refactors |
-| `duplication-check` | Identifies code duplication and suggests existing code reuse |
+| `owasp-check` | **🔒 Comprehensive security analysis** based on OWASP Top 10 2021 guidelines including broken access control, cryptographic failures, injection vulnerabilities, insecure design, security misconfigurations, vulnerable components, authentication failures, software integrity failures, logging failures, and SSRF. Also covers XSS, CSRF, path traversal, and security headers analysis. |
+| `sql-injection` | **💉 SQL injection vulnerability analysis** - Detects SQL, NoSQL, and other injection vulnerabilities across multiple languages (JavaScript, Python, Java, PHP, C#, Go) and frameworks. Covers parameterized queries, ORM security, dynamic query construction, and stored procedure vulnerabilities. |
+| `secrets-detection` | **🔑 Advanced secrets detection** - Scans for hardcoded API keys, database credentials, private keys, cloud provider secrets, third-party service keys, cryptographic material, and logging security issues. Features entropy analysis, context evaluation, false positive reduction, and multi-language support across configuration files. |
+| `code-review` | **🔍 Comprehensive code quality analysis** - Reviews naming conventions, code structure, architecture patterns, SOLID principles, performance optimization, error handling, input validation, testing quality, security best practices, documentation, and technical debt management. Includes language-specific conventions for JavaScript, Python, Java, C#. |
+| `refactor-suggestions` | **♻️ Code refactoring opportunities** - Detects code smells like long methods, duplicate code, poor naming, and suggests refactoring techniques. Includes extended codebase analysis capabilities to find patterns across multiple files. |
+| `duplication-check` | **📋 Code duplication detection** - Identifies duplicated code patterns and suggests opportunities to reuse existing implementations across the codebase. |
 
 ## Output
 

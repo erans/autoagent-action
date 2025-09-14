@@ -1,4 +1,18 @@
-Analyze the code for refactoring opportunities and code smells. Focus on the following areas:
+Analyze the code for refactoring opportunities and code smells.
+
+## Analysis Strategy
+
+**Primary Focus**: Start by analyzing the changed files specified in the analysis scope. These files are your main target for refactoring suggestions.
+
+**Extended Analysis**: When you identify patterns, duplications, or relationships that span beyond the changed files, you can:
+- Use `grep` or `rg` commands to search for similar patterns across the codebase
+- Use `ast-grep` for structural code pattern matching
+- Examine related files that interact with the changed code
+- Look for opportunities where changes in the modified files could benefit from refactoring in related files
+
+**Prioritization**: Always prioritize refactoring suggestions for the changed files first, then mention related files as additional opportunities.
+
+Focus on the following areas:
 
 ## Code Smells to Identify
 
@@ -16,6 +30,8 @@ Analyze the code for refactoring opportunities and code smells. Focus on the fol
 - Copy-paste programming
 - Similar logic repeated in multiple places
 - Opportunities for extraction into common methods
+- **Extended Search**: Use `grep` or `rg` to find similar code patterns across the entire codebase
+- **Structure Analysis**: Use `ast-grep` to find structurally similar code blocks
 
 ### Dead Code
 - Unused variables, methods, or classes
@@ -49,9 +65,22 @@ Analyze the code for refactoring opportunities and code smells. Focus on the fol
 - Outdated or misleading comments
 - Commented-out code
 
+## Analysis Tools Available
+
+When expanding beyond the changed files, use these commands:
+- `grep -r "pattern" .` or `rg "pattern"` for text-based searches
+- `ast-grep --pattern "$pattern"` for structural code matching
+- `find . -name "*.ext" | head -10` to discover related files
+- File reading tools to examine related code when patterns are found
+
 ## Refactoring Suggestions
 
 **IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
+
+**Analysis Flow**:
+1. Start with the changed files as your primary focus
+2. When you find patterns or duplications, search for similar occurrences across the codebase
+3. Prioritize refactoring suggestions by impact: changed files first, then related opportunities
 
 For each issue found, provide:
 - **Location**: File and line number

@@ -1,24 +1,136 @@
-Perform a comprehensive security analysis based on OWASP Top 10 guidelines. Focus on the following areas:
+Perform a comprehensive security analysis based on OWASP Top 10 2021 guidelines and additional security best practices. Focus on the following areas:
 
-1. **Injection Vulnerabilities**: Look for SQL injection, NoSQL injection, LDAP injection, OS command injection, and other injection flaws in the code.
+## A01:2021 – Broken Access Control
 
-2. **Broken Authentication**: Check for weak authentication mechanisms, session management issues, and credential management problems.
+**Authorization Flaws**:
+- Missing access controls and authorization checks
+- Privilege escalation vulnerabilities (vertical/horizontal)
+- Insecure direct object references (IDOR)
+- Force browsing to authenticated pages
+- CORS misconfiguration allowing unauthorized origins
 
-3. **Sensitive Data Exposure**: Identify hardcoded secrets, API keys, passwords, or other sensitive information that should not be exposed.
+**Pattern Detection**:
+- Functions missing authorization checks before sensitive operations
+- User ID parameters without validation
+- Admin endpoints accessible to regular users
+- API endpoints without proper authentication
 
-4. **XML External Entities (XXE)**: Look for XML processing vulnerabilities that could lead to XXE attacks.
+## A02:2021 – Cryptographic Failures
 
-5. **Broken Access Control**: Check for missing or improper access controls, privilege escalation vulnerabilities, and insecure direct object references.
+**Weak Cryptography**:
+- Use of deprecated/weak algorithms (MD5, SHA1, DES, RC4)
+- Hardcoded cryptographic keys and IVs
+- Insufficient key length or entropy
+- Improper random number generation
+- Unencrypted sensitive data in transit or at rest
 
-6. **Security Misconfiguration**: Identify insecure default configurations, missing security headers, and unnecessary features enabled.
+**Implementation Issues**:
+- Custom crypto implementations instead of proven libraries
+- Weak password hashing (plain text, MD5, SHA1 without salt)
+- Missing HTTPS enforcement
+- Weak TLS configurations
 
-7. **Cross-Site Scripting (XSS)**: Look for stored, reflected, and DOM-based XSS vulnerabilities in web applications.
+## A03:2021 – Injection Vulnerabilities
 
-8. **Insecure Deserialization**: Check for unsafe deserialization of untrusted data that could lead to remote code execution.
+**SQL Injection**: String concatenation in queries, dynamic SQL, unparameterized queries
+**NoSQL Injection**: Unsafe MongoDB queries, dynamic NoSQL operations
+**Command Injection**: System calls with user input, shell command construction
+**LDAP Injection**: Unsafe LDAP query construction
+**Expression Language Injection**: Unsafe template rendering
+**Header Injection**: HTTP header manipulation
 
-9. **Using Components with Known Vulnerabilities**: Identify outdated dependencies, libraries, or frameworks with known security issues.
+## A04:2021 – Insecure Design
 
-10. **Insufficient Logging & Monitoring**: Check for inadequate logging of security events and lack of monitoring for suspicious activities.
+**Design Flaws**:
+- Missing security controls by design
+- Business logic vulnerabilities
+- Race conditions in critical operations
+- Improper workflow validation
+- Missing rate limiting on sensitive operations
+
+## A05:2021 – Security Misconfiguration
+
+**Configuration Issues**:
+- Default credentials and accounts
+- Missing security headers (CSP, HSTS, X-Frame-Options)
+- Verbose error messages exposing system info
+- Unnecessary features enabled
+- Insecure cloud storage configurations
+- Missing HTTPS redirects
+
+## A06:2021 – Vulnerable Components
+
+**Dependency Analysis**:
+- Outdated libraries and frameworks
+- Known vulnerable dependencies (check package.json, requirements.txt, etc.)
+- Unused or unnecessary dependencies
+- Missing security patches
+- Components from untrusted sources
+
+**Extended Analysis**: Use available tools to check dependency files and search for known vulnerable patterns.
+
+## A07:2021 – Authentication Failures
+
+**Authentication Issues**:
+- Weak password policies
+- Missing brute force protection
+- Insecure session management
+- JWT vulnerabilities (weak secrets, algorithm confusion)
+- Missing multi-factor authentication for sensitive operations
+- Password reset vulnerabilities
+
+## A08:2021 – Software Integrity Failures
+
+**Supply Chain Security**:
+- Missing integrity checks for updates
+- Insecure CI/CD pipelines
+- Auto-updates without verification
+- Unsigned or unverified code
+
+## A09:2021 – Logging & Monitoring Failures
+
+**Insufficient Security Monitoring**:
+- Missing security event logging
+- Logs containing sensitive data
+- Insufficient log retention
+- Missing alerting for security events
+- Inadequate incident response preparation
+
+## A10:2021 – Server-Side Request Forgery (SSRF)
+
+**SSRF Vulnerabilities**:
+- URL parameters accepting user input
+- HTTP requests to user-controlled destinations
+- Missing URL validation and allowlisting
+- Internal service exposure
+
+## Additional Security Analysis
+
+### Cross-Site Scripting (XSS)
+- **Stored XSS**: User input stored without sanitization
+- **Reflected XSS**: URL parameters reflected in response
+- **DOM XSS**: Client-side JavaScript vulnerabilities
+- Missing Content Security Policy (CSP)
+
+### Cross-Site Request Forgery (CSRF)
+- Missing CSRF tokens
+- State-changing operations via GET requests
+- Insufficient SameSite cookie attributes
+- Missing referrer validation
+
+### Path Traversal
+- File operations with user input
+- Directory traversal vulnerabilities (../, ..\)
+- Unsafe file inclusion
+- Zip extraction vulnerabilities
+
+### Security Headers Analysis
+Check for missing security headers:
+- Content-Security-Policy
+- X-Frame-Options
+- X-Content-Type-Options
+- Strict-Transport-Security
+- Referrer-Policy
 
 **IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
 
