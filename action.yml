@@ -15,6 +15,12 @@ inputs:
     type: string
     default: ""
 
+  customFiles:
+    description: "YAML or JSON array of custom .prompt files to execute (supports relative and absolute paths)"
+    required: false
+    type: string
+    default: "[]"
+
   action:
     description: "Determines what to do with the result. Supported: comment"
     required: true
@@ -51,7 +57,7 @@ runs:
       shell: bash
       env:
         MODEL: ${{ env.MODEL }}
-      run: ${{ github.action_path }}/scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}" "${{ inputs.scope }}"
+      run: ${{ github.action_path }}/scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}" "${{ inputs.scope }}" "${{ inputs.customFiles }}"
 
     - name: Post Results as PR Comment
       if: ${{ inputs.action == 'comment' }}

@@ -8,9 +8,10 @@ RULES="${1:-}"
 CUSTOM_PROMPT="${2:-}"
 AGENT="${3:-cursor}"
 SCOPE="${4:-changed}"
+CUSTOM_FILES="${5:-}"
 RESULT_FILE="results.json"
 
-echo "DEBUG: Parsed arguments - RULES: '$RULES', CUSTOM_PROMPT: '$CUSTOM_PROMPT', AGENT: '$AGENT', SCOPE: '$SCOPE'"
+echo "DEBUG: Parsed arguments - RULES: '$RULES', CUSTOM_PROMPT: '$CUSTOM_PROMPT', AGENT: '$AGENT', SCOPE: '$SCOPE', CUSTOM_FILES: '$CUSTOM_FILES'"
 
 # Get the action directory (where this script is located)
 ACTION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -151,8 +152,8 @@ fi
 echo "DEBUG: Final file context: $FILE_CONTEXT"
 
 # Validate inputs
-if [ -z "$RULES" ] && [ -z "$CUSTOM_PROMPT" ]; then
-    echo "Error: No rules or custom prompt provided"
+if [ -z "$RULES" ] && [ -z "$CUSTOM_PROMPT" ] && [ -z "$CUSTOM_FILES" ]; then
+    echo "Error: No rules, custom prompt, or custom files provided"
     exit 1
 fi
 
@@ -248,7 +249,9 @@ echo "$RULES_ARRAY" | while read -r RULE; do
     
     # Combine base prompt with scope context, rule-specific prompt and comment formatting
     echo "DEBUG: About to combine prompts..."
-    FULL_PROMPT="$(cat "$BASE_PROMPT_FILE")
+    # Expand environment variables in base prompt
+    BASE_PROMPT_EXPANDED=$(envsubst < "$BASE_PROMPT_FILE" 2>/dev/null || cat "$BASE_PROMPT_FILE")
+    FULL_PROMPT="$BASE_PROMPT_EXPANDED
 
 ## Analysis Scope
 $FILE_CONTEXT
@@ -443,6 +446,297 @@ $(cat "$COMMENT_PROMPT_FILE")"
 done
 fi
 
+# Function to resolve custom file path
+resolve_custom_file_path() {
+    local file_path="$1"
+
+    # Handle relative paths - resolve relative to workspace
+    if [[ "$file_path" != /* ]]; then
+        file_path="$GITHUB_WORKSPACE/$file_path"
+    fi
+
+    # Resolve and validate path
+    file_path=$(realpath "$file_path" 2>/dev/null || echo "$file_path")
+    echo "$file_path"
+}
+
+# Function to validate custom file
+validate_custom_file() {
+    local file_path="$1"
+
+    if [[ ! -f "$file_path" ]]; then
+        echo "❌ Custom file not found: $file_path"
+        return 1
+    fi
+
+    if [[ ! -r "$file_path" ]]; then
+        echo "❌ Custom file not readable: $file_path"
+        return 1
+    fi
+
+    # Check file size (prevent files > 1MB)
+    local file_size=$(stat -f%z "$file_path" 2>/dev/null || stat -c%s "$file_path" 2>/dev/null || echo 0)
+    if [[ $file_size -gt 1048576 ]]; then
+        echo "❌ Custom file too large (>1MB): $file_path"
+        return 1
+    fi
+
+    return 0
+}
+
+# Function to execute custom file
+execute_custom_file() {
+    local custom_file_path="$1"
+    local custom_rule_name="$2"
+
+    echo "Executing custom file: $custom_file_path (rule: $custom_rule_name)"
+
+    # Load base prompt with GitHub Actions context
+    BASE_PROMPT_FILE="$ACTION_DIR/rules/base.prompt"
+    echo "DEBUG: About to load base prompt file: $BASE_PROMPT_FILE"
+    if [ ! -f "$BASE_PROMPT_FILE" ]; then
+        echo "Error: Base prompt file not found: $BASE_PROMPT_FILE"
+        return 1
+    fi
+    echo "DEBUG: Base prompt file found, loading content..."
+
+    # Load comment prompt for output formatting
+    COMMENT_PROMPT_FILE="$ACTION_DIR/rules/comment.prompt"
+    echo "DEBUG: About to load comment prompt file: $COMMENT_PROMPT_FILE"
+    if [ ! -f "$COMMENT_PROMPT_FILE" ]; then
+        echo "Error: Comment prompt file not found: $COMMENT_PROMPT_FILE"
+        return 1
+    fi
+    echo "DEBUG: Comment prompt file found, loading content..."
+
+    # Combine base prompt with scope context, custom file content and comment formatting
+    echo "DEBUG: About to combine prompts with custom file..."
+    # Expand environment variables in base prompt
+    BASE_PROMPT_EXPANDED=$(envsubst < "$BASE_PROMPT_FILE" 2>/dev/null || cat "$BASE_PROMPT_FILE")
+    FULL_CUSTOM_FILE_PROMPT="$BASE_PROMPT_EXPANDED
+
+## Analysis Scope
+$FILE_CONTEXT
+
+You have access to git commands to see changes:
+- git diff --name-only origin/main..HEAD (or HEAD~1 HEAD)
+- git diff origin/main..HEAD -- <filename>
+- git show --name-only HEAD
+
+Use these commands as needed for your analysis.
+
+$(cat "$custom_file_path")
+
+$(cat "$COMMENT_PROMPT_FILE")"
+    echo "DEBUG: Custom file prompts combined, total length: ${#FULL_CUSTOM_FILE_PROMPT}"
+
+    # Execute the custom file using the selected agent
+    case "$AGENT" in
+        cursor)
+            if command -v cursor-agent >/dev/null 2>&1; then
+                echo "DEBUG: Executing cursor-agent with custom file prompt length: ${#FULL_CUSTOM_FILE_PROMPT}"
+                echo "DEBUG: First 200 chars of custom file prompt:"
+                echo "${FULL_CUSTOM_FILE_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM FILE PROMPT PREVIEW ---"
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_FILE_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute cursor-agent with -p flag
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 300 cursor-agent -p --output-format text --model "$MODEL" --force < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw cursor-agent output for custom file:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: cursor-agent not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        claude)
+            if command -v claude >/dev/null 2>&1; then
+                echo "DEBUG: Executing claude with custom file prompt length: ${#FULL_CUSTOM_FILE_PROMPT}"
+                echo "DEBUG: First 200 chars of custom file prompt:"
+                echo "${FULL_CUSTOM_FILE_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM FILE PROMPT PREVIEW ---"
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_FILE_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute claude with model flag and prompt from file
+                OUTPUT=$(timeout 300 claude --model "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw claude output for custom file:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: claude not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        gemini)
+            if command -v gemini >/dev/null 2>&1; then
+                echo "DEBUG: Executing gemini with custom file prompt length: ${#FULL_CUSTOM_FILE_PROMPT}"
+                echo "DEBUG: First 200 chars of custom file prompt:"
+                echo "${FULL_CUSTOM_FILE_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM FILE PROMPT PREVIEW ---"
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_FILE_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute gemini with model flag and output format
+                OUTPUT=$(timeout 300 gemini -m "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw gemini output for custom file:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: gemini not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        codex)
+            if command -v codex >/dev/null 2>&1; then
+                echo "DEBUG: Executing codex with custom file prompt length: ${#FULL_CUSTOM_FILE_PROMPT}"
+                echo "DEBUG: First 200 chars of custom file prompt:"
+                echo "${FULL_CUSTOM_FILE_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM FILE PROMPT PREVIEW ---"
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_FILE_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute codex with model flag (non-interactive)
+                OUTPUT=$(timeout 300 codex -m "$MODEL" "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw codex output for custom file:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: codex not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        amp)
+            if command -v amp >/dev/null 2>&1; then
+                echo "DEBUG: Executing amp with custom file prompt length: ${#FULL_CUSTOM_FILE_PROMPT}"
+                echo "DEBUG: First 200 chars of custom file prompt:"
+                echo "${FULL_CUSTOM_FILE_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM FILE PROMPT PREVIEW ---"
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_FILE_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute amp with -x flag for execute mode (non-interactive)
+                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 300 amp -x "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw amp output for custom file:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: amp not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        *)
+            OUTPUT="Error: Unsupported agent: $AGENT"
+            ;;
+    esac
+
+    # Add result to JSON array
+    add_result "$custom_rule_name" "$OUTPUT"
+    echo "Completed custom file: $custom_file_path (rule: $custom_rule_name)"
+}
+
+# Parse custom files input (support both YAML and JSON)
+echo "DEBUG: About to parse custom files input: '$CUSTOM_FILES'"
+CUSTOM_FILES_ARRAY=""
+
+if [ -n "$CUSTOM_FILES" ]; then
+    echo "DEBUG: Custom files input is not empty, parsing..."
+    # Try to parse as YAML first, then JSON
+    if command -v yq >/dev/null 2>&1; then
+        echo "DEBUG: Using yq to parse YAML custom files"
+        # Parse as YAML using yq
+        CUSTOM_FILES_ARRAY=$(echo "$CUSTOM_FILES" | yq -r '.[]' 2>/dev/null || echo "")
+    elif command -v jq >/dev/null 2>&1; then
+        echo "DEBUG: Using jq to parse JSON custom files"
+        # Parse as JSON using jq
+        CUSTOM_FILES_ARRAY=$(echo "$CUSTOM_FILES" | jq -r '.[]' 2>/dev/null || echo "")
+    else
+        echo "DEBUG: No yq or jq found, treating custom files as space-separated list"
+        # Fallback: treat as space-separated list
+        CUSTOM_FILES_ARRAY="$CUSTOM_FILES"
+    fi
+
+    echo "DEBUG: Parsed custom files array: '$CUSTOM_FILES_ARRAY'"
+    if [ -z "$CUSTOM_FILES_ARRAY" ] && [ "$CUSTOM_FILES" != "[]" ]; then
+        echo "Error: Could not parse custom files input. Please provide valid YAML or JSON array."
+        echo "Example: '[\"./rules/custom.prompt\", \"../shared/rule.prompt\"]'"
+        exit 1
+    fi
+else
+    echo "DEBUG: No custom files input provided"
+fi
+
+# Execute each custom file (if any)
+if [ -n "$CUSTOM_FILES_ARRAY" ]; then
+    echo "$CUSTOM_FILES_ARRAY" | while read -r CUSTOM_FILE; do
+        if [ -z "$CUSTOM_FILE" ]; then
+            continue
+        fi
+
+        echo "Processing custom file: $CUSTOM_FILE"
+
+        # Resolve the file path
+        CUSTOM_FILE_RESOLVED=$(resolve_custom_file_path "$CUSTOM_FILE")
+        echo "DEBUG: Resolved custom file path: $CUSTOM_FILE_RESOLVED"
+
+        # Validate the custom file
+        if validate_custom_file "$CUSTOM_FILE_RESOLVED"; then
+            # Extract clean filename for display (no path, no .prompt extension)
+            CUSTOM_RULE_NAME=$(basename "$CUSTOM_FILE" .prompt)
+            echo "DEBUG: Custom rule name: $CUSTOM_RULE_NAME"
+
+            # Execute the custom file
+            execute_custom_file "$CUSTOM_FILE_RESOLVED" "$CUSTOM_RULE_NAME"
+        else
+            echo "Skipping invalid custom file: $CUSTOM_FILE"
+            # Add error result to JSON array
+            add_result "$(basename "$CUSTOM_FILE" .prompt)" "Error: Custom file validation failed for $CUSTOM_FILE"
+        fi
+    done
+fi
+
 # Run custom prompt if provided
 if [ -n "$CUSTOM_PROMPT" ]; then
     echo "Executing custom prompt..."
@@ -462,7 +756,9 @@ if [ -n "$CUSTOM_PROMPT" ]; then
     fi
     
     # Combine base prompt with scope context, custom prompt and comment formatting
-    FULL_CUSTOM_PROMPT="$(cat "$BASE_PROMPT_FILE")
+    # Expand environment variables in base prompt
+    BASE_PROMPT_EXPANDED=$(envsubst < "$BASE_PROMPT_FILE" 2>/dev/null || cat "$BASE_PROMPT_FILE")
+    FULL_CUSTOM_PROMPT="$BASE_PROMPT_EXPANDED
 
 ## Analysis Scope
 $FILE_CONTEXT

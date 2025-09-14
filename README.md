@@ -408,12 +408,174 @@ jobs:
           agent: cursor
 ```
 
+### Custom Rule Files Examples
+
+AutoAgent supports custom rule files through the `customFiles` parameter, allowing you to create reusable, organization-specific analysis rules.
+
+#### Basic Custom Files Example
+
+```yaml
+name: AutoAgent with Custom Rules
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  autoagent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run AutoAgent with Custom Files
+        uses: erans/autoagent@main
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        with:
+          rules: |
+            - owasp-check
+            - code-review
+          customFiles: |
+            - .github/rules/team-standards.prompt
+            - .github/rules/api-guidelines.prompt
+          agent: cursor
+```
+
+#### Repository-Specific Rules
+
+Create custom rule files in your repository under `.github/rules/`:
+
+**`.github/rules/team-standards.prompt`**:
+```
+Review the code for adherence to our team's coding standards:
+
+## API Design Standards
+- All API endpoints must use consistent naming (kebab-case)
+- Response structures must include status, data, and meta fields
+- Error responses must follow RFC 7807 problem details format
+
+## Database Standards
+- All queries must use prepared statements
+- Table names must be snake_case
+- Foreign key relationships must be explicitly defined
+
+## Testing Requirements
+- All public methods must have unit tests
+- Integration tests required for API endpoints
+- Test coverage must be > 80%
+
+Provide specific violations found with file locations and recommended fixes.
+```
+
+**`.github/rules/api-guidelines.prompt`**:
+```
+Analyze the API implementation for compliance with our guidelines:
+
+## REST API Standards
+- Proper HTTP status codes usage
+- Consistent error handling patterns
+- Request/response validation
+- Rate limiting implementation
+
+## Security Requirements
+- Input sanitization for all endpoints
+- Authentication middleware on protected routes
+- SQL injection prevention
+- XSS protection measures
+
+Report any deviations from these standards with specific remediation steps.
+```
+
+#### Shared Organization Rules
+
+Use relative paths to reference shared rules from a parent directory or organization-wide rule repository:
+
+```yaml
+- name: Run AutoAgent with Shared Org Rules
+  uses: erans/autoagent@main
+  env:
+    CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+  with:
+    customFiles: |
+      - ../shared-rules/org-security.prompt
+      - ../shared-rules/performance-standards.prompt
+      - .github/rules/local-overrides.prompt
+    agent: cursor
+```
+
+#### Mixed Rules Configuration
+
+Combine predefined rules, custom files, and custom prompts:
+
+```yaml
+- name: Comprehensive AutoAgent Analysis
+  uses: erans/autoagent@main
+  env:
+    CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+  with:
+    rules: |
+      - owasp-check
+      - secrets-detection
+    customFiles: |
+      - .github/rules/team-standards.prompt
+      - .github/rules/performance-check.prompt
+    custom: |
+      Additionally, please verify that all new database migrations
+      include proper rollback procedures and performance impact analysis.
+    agent: cursor
+```
+
+#### JSON Format Support
+
+CustomFiles also supports JSON array format:
+
+```yaml
+- name: AutoAgent with JSON Custom Files
+  uses: erans/autoagent@main
+  env:
+    CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+  with:
+    customFiles: '["./rules/custom.prompt", ".github/rules/standards.prompt"]'
+    agent: cursor
+```
+
+#### File Path Resolution
+
+- **Relative paths**: Resolved relative to the repository root (`$GITHUB_WORKSPACE`)
+  - `./rules/custom.prompt` → `$GITHUB_WORKSPACE/rules/custom.prompt`
+  - `.github/rules/team.prompt` → `$GITHUB_WORKSPACE/.github/rules/team.prompt`
+  - `../shared/rule.prompt` → Parent directory of workspace
+
+- **Absolute paths**: Used as-is (with security validation)
+  - `/home/runner/work/shared/rule.prompt`
+
+- **Security features**:
+  - File existence and readability validation
+  - File size limits (max 1MB per file)
+  - Path traversal protection
+  - Graceful error handling for invalid files
+
+#### Rule Naming in Comments
+
+Custom rule files appear in PR comments using just the filename (without path or `.prompt` extension):
+
+- `.github/rules/team-standards.prompt` appears as `team-standards`
+- `../shared/org-security.prompt` appears as `org-security`
+- `/absolute/path/api-check.prompt` appears as `api-check`
+
 ## Inputs
 
 | Input | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `rules` | String (YAML/JSON list) | ❌ No | `[]` | Predefined rules to execute |
 | `custom` | String | ❌ No | `""` | Custom prompt to append to predefined rules |
+| `customFiles` | String (YAML/JSON list) | ❌ No | `[]` | Custom .prompt files to execute (supports relative and absolute paths) |
 | `action` | Enum | ✅ Yes | `comment` | What to do with results (currently `comment` only) |
 | `install-agent` | Boolean | ❌ No | `true` | Whether to install the agent automatically |
 | `agent` | String | ❌ No | `cursor` | Which agent to use (`cursor`, `claude`, `gemini`, `codex`, `amp`) |

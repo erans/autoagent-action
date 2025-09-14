@@ -3,11 +3,10 @@ You are operating in a GitHub Actions runner.
 The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available. You have write access to repository contents and can comment on pull requests, but you must not create or edit PRs directly.
 
 # Context:
-- Repo: ${{ github.repository }}
-- Owner: ${{ github.repository_owner }}
-- Workflow Run ID: ${{ github.event.workflow_run.id }}
-- Workflow Run URL: ${{ github.event.workflow_run.html_url }}
-- Fix Branch Prefix: ${{ env.BRANCH_PREFIX }}
+- Repo: ${GITHUB_REPOSITORY}
+- Owner: ${GITHUB_REPOSITORY_OWNER}
+- Workflow Run ID: ${GITHUB_RUN_ID}
+- Workflow Run URL: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 
 You have access to these tools: git, bash, node, etc.
 Your task is to analyze this repository's files in the context of this pull request.
