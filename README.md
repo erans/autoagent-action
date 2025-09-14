@@ -337,6 +337,7 @@ jobs:
 | Rule Name | Description |
 |-----------|-------------|
 | `owasp-check` | Security scan based on OWASP Top 10 guidelines |
+| `sql-injection` | Comprehensive SQL injection vulnerability analysis |
 | `code-review` | Performs a general AI-driven code review |
 | `refactor-suggestions` | Detects code smells and suggests refactors |
 | `duplication-check` | Identifies code duplication and suggests existing code reuse |

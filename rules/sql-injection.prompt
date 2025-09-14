@@ -1,0 +1,104 @@
+Perform a comprehensive SQL injection vulnerability analysis. Examine all database-related code for potential SQL injection vulnerabilities across different programming languages and database technologies.
+
+## Key Areas to Analyze:
+
+### 1. **Direct SQL Query Construction**
+- String concatenation or interpolation to build SQL queries
+- Dynamic SQL queries using user input
+- Unsafe query builders that concatenate user data
+- Template strings with unescaped user input
+
+### 2. **Parameterized Query Issues**
+- Missing parameter binding for user inputs
+- Incorrect use of parameterized queries
+- Mixing parameterized and concatenated approaches
+- Dynamic table/column names without validation
+
+### 3. **ORM and Query Builder Vulnerabilities**
+- Raw SQL within ORM contexts (e.g., `.raw()`, `.query()`)
+- Unsafe dynamic query building
+- ORM methods that accept raw SQL strings
+- Improper escaping in ORM expressions
+
+### 4. **Stored Procedure Vulnerabilities**
+- Dynamic SQL within stored procedures
+- Unescaped parameters in stored procedures
+- Concatenated SQL in database functions
+
+### 5. **Second-Order SQL Injection**
+- Data retrieved from database used in subsequent queries
+- Trust in previously stored data without re-validation
+- Cross-session data contamination
+
+### 6. **NoSQL Injection (if applicable)**
+- MongoDB injection via unescaped queries
+- JSON-based query injection
+- Operator injection in NoSQL databases
+
+## Language-Specific Patterns to Check:
+
+### **Python**
+- `cursor.execute()` with string formatting
+- Raw SQL in Django/SQLAlchemy
+- `%s` formatting in SQL strings
+- f-strings in SQL queries
+
+### **JavaScript/Node.js**
+- Template literals in SQL
+- String concatenation with `+`
+- Sequelize raw queries
+- Dynamic MongoDB queries
+
+### **Java**
+- `Statement` vs `PreparedStatement` usage
+- String concatenation in queries
+- Hibernate native queries
+- MyBatis dynamic SQL
+
+### **C#/.NET**
+- String concatenation in SqlCommand
+- Dynamic LINQ expressions
+- Entity Framework raw SQL
+- Command.CommandText building
+
+### **PHP**
+- mysqli/PDO with concatenated queries
+- Direct `$_POST`/`$_GET` in SQL
+- Magic quotes bypasses
+
+### **Go**
+- `fmt.Sprintf()` in SQL queries
+- String concatenation with user input
+- Direct variable insertion
+
+## Critical Vulnerability Indicators:
+
+1. **High Risk**: Direct concatenation of user input into SQL
+2. **High Risk**: Dynamic table/column names from user input
+3. **Medium Risk**: Insufficient input validation before queries
+4. **Medium Risk**: Raw SQL usage in ORM contexts
+5. **Low Risk**: Missing parameterization in non-user-facing queries
+
+## Analysis Requirements:
+
+- Check all database interaction points
+- Trace user input flow to SQL execution
+- Verify proper parameterization usage
+- Identify bypass opportunities
+- Check for adequate input validation
+- Review error handling that might leak information
+
+**IMPORTANT: Only provide the final analysis results. Do not show your thinking process, intermediate steps, or work-in-progress.**
+
+For each SQL injection vulnerability found, provide:
+- **File and line number**
+- **Vulnerability type** (e.g., Classic SQLi, Blind SQLi, Second-order)
+- **Attack vector** (how user input reaches the query)
+- **Potential impact** (data theft, manipulation, privilege escalation)
+- **Proof of concept** (example malicious input if applicable)
+- **Remediation steps** (specific code fixes)
+- **Severity level** (Critical/High/Medium/Low)
+
+If no SQL injection vulnerabilities are found, confirm that the database interactions follow secure coding practices with proper parameterization and input validation.
+
+**Output Format**: Provide a structured, actionable report focusing on the most critical SQL injection risks first, with clear remediation guidance.
