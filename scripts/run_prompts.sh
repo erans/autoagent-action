@@ -204,10 +204,20 @@ else
 fi
 
     echo "DEBUG: Parsed rules array: '$RULES_ARRAY'"
+    # Count number of rules
+    if [ -n "$RULES_ARRAY" ]; then
+        RULE_COUNT=$(echo "$RULES_ARRAY" | wc -l)
+        echo "DEBUG: Number of rules parsed: $RULE_COUNT"
+        echo "DEBUG: Individual rules:"
+        echo "$RULES_ARRAY" | while IFS= read -r rule; do
+            echo "DEBUG:   - '$rule'"
+        done
+    fi
+
     if [ -z "$RULES_ARRAY" ] && [ "$RULES" != "[]" ]; then
-    echo "Error: Could not parse rules input. Please provide valid YAML or JSON array."
-    echo "Example: '[\"owasp-check\", \"code-review\"]'"
-    exit 1
+        echo "Error: Could not parse rules input. Please provide valid YAML or JSON array."
+        echo "Example: '[\"owasp-check\", \"code-review\"]'"
+        exit 1
     fi
 else
     echo "DEBUG: No rules input provided"
@@ -215,11 +225,14 @@ fi
 
 # Execute each rule (if any)
 if [ -n "$RULES_ARRAY" ]; then
-echo "$RULES_ARRAY" | while read -r RULE; do
+# Use while loop with process substitution to avoid subshell issues
+while IFS= read -r RULE; do
     if [ -z "$RULE" ]; then
         continue
     fi
-    
+
+    echo "DEBUG: Processing rule: '$RULE'"
+
     PROMPT_FILE="$ACTION_DIR/rules/${RULE}.prompt"
     if [ ! -f "$PROMPT_FILE" ]; then
         echo "Error: Rule file not found: $PROMPT_FILE"
@@ -289,7 +302,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute cursor-agent with -p flag
-                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 300 cursor-agent -p --output-format text --model "$MODEL" --force < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 600 cursor-agent -p --output-format text --model "$MODEL" --force < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -322,7 +335,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute claude with model flag and prompt from file
-                OUTPUT=$(timeout 300 claude --model "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
+                OUTPUT=$(timeout 600 claude --model "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -355,7 +368,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute gemini with model flag and output format
-                OUTPUT=$(timeout 300 gemini -m "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
+                OUTPUT=$(timeout 600 gemini -m "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -388,7 +401,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute codex with model flag (non-interactive)
-                OUTPUT=$(timeout 300 codex -m "$MODEL" "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
+                OUTPUT=$(timeout 600 codex -m "$MODEL" "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -421,7 +434,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute amp with -x flag for execute mode (non-interactive)
-                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 300 amp -x "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
+                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 600 amp -x "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -439,11 +452,20 @@ $(cat "$COMMENT_PROMPT_FILE")"
             OUTPUT="Error: Unsupported agent: $AGENT"
             ;;
     esac
-    
+
+    # Check if output is empty and add warning
+    if [ -z "$OUTPUT" ] || [ "${#OUTPUT}" -lt 10 ]; then
+        echo "WARNING: Rule '$RULE' returned empty or very short output. This may indicate an issue."
+        echo "DEBUG: Agent output length: ${#OUTPUT}"
+        if [ -z "$OUTPUT" ]; then
+            OUTPUT="⚠️ Warning: No analysis results were returned for this rule. This may indicate a processing error or timeout."
+        fi
+    fi
+
     # Add result to JSON array
     add_result "$RULE" "$OUTPUT"
     echo "Completed rule: $RULE"
-done
+done <<< "$RULES_ARRAY"
 fi
 
 # Function to resolve custom file path
@@ -545,7 +567,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute cursor-agent with -p flag
-                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 300 cursor-agent -p --output-format text --model "$MODEL" --force < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 600 cursor-agent -p --output-format text --model "$MODEL" --force < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -572,7 +594,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute claude with model flag and prompt from file
-                OUTPUT=$(timeout 300 claude --model "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
+                OUTPUT=$(timeout 600 claude --model "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -599,7 +621,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute gemini with model flag and output format
-                OUTPUT=$(timeout 300 gemini -m "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
+                OUTPUT=$(timeout 600 gemini -m "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -626,7 +648,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute codex with model flag (non-interactive)
-                OUTPUT=$(timeout 300 codex -m "$MODEL" "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
+                OUTPUT=$(timeout 600 codex -m "$MODEL" "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -653,7 +675,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
 
                 # Execute amp with -x flag for execute mode (non-interactive)
-                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 300 amp -x "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
+                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 600 amp -x "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
 
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
@@ -671,6 +693,15 @@ $(cat "$COMMENT_PROMPT_FILE")"
             OUTPUT="Error: Unsupported agent: $AGENT"
             ;;
     esac
+
+    # Check if output is empty and add warning
+    if [ -z "$OUTPUT" ] || [ "${#OUTPUT}" -lt 10 ]; then
+        echo "WARNING: Custom file '$custom_file_path' returned empty or very short output. This may indicate an issue."
+        echo "DEBUG: Agent output length: ${#OUTPUT}"
+        if [ -z "$OUTPUT" ]; then
+            OUTPUT="⚠️ Warning: No analysis results were returned for this custom file. This may indicate a processing error or timeout."
+        fi
+    fi
 
     # Add result to JSON array
     add_result "$custom_rule_name" "$OUTPUT"
@@ -710,12 +741,12 @@ fi
 
 # Execute each custom file (if any)
 if [ -n "$CUSTOM_FILES_ARRAY" ]; then
-    echo "$CUSTOM_FILES_ARRAY" | while read -r CUSTOM_FILE; do
+    while IFS= read -r CUSTOM_FILE; do
         if [ -z "$CUSTOM_FILE" ]; then
             continue
         fi
 
-        echo "Processing custom file: $CUSTOM_FILE"
+        echo "DEBUG: Processing custom file: '$CUSTOM_FILE'"
 
         # Resolve the file path
         CUSTOM_FILE_RESOLVED=$(resolve_custom_file_path "$CUSTOM_FILE")
@@ -734,7 +765,7 @@ if [ -n "$CUSTOM_FILES_ARRAY" ]; then
             # Add error result to JSON array
             add_result "$(basename "$CUSTOM_FILE" .prompt)" "Error: Custom file validation failed for $CUSTOM_FILE"
         fi
-    done
+    done <<< "$CUSTOM_FILES_ARRAY"
 fi
 
 # Run custom prompt if provided
@@ -791,7 +822,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
 
                 # Execute cursor-agent with -p flag
-                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 300 cursor-agent -p --output-format text --model "$MODEL" --force < "$CUSTOM_PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
+                OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 600 cursor-agent -p --output-format text --model "$MODEL" --force < "$CUSTOM_PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
 
                 # Clean up temporary file
                 rm -f "$CUSTOM_PROMPT_FILE_TEMP"
@@ -820,7 +851,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
 
                 # Execute claude with model flag and prompt from file
-                OUTPUT=$(timeout 300 claude --model "$MODEL" --output-format text -p "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
+                OUTPUT=$(timeout 600 claude --model "$MODEL" --output-format text -p "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
 
                 # Clean up temporary file
                 rm -f "$CUSTOM_PROMPT_FILE_TEMP"
@@ -849,7 +880,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
 
                 # Execute gemini with model flag and output format
-                OUTPUT=$(timeout 300 gemini -m "$MODEL" --output-format text -p "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
+                OUTPUT=$(timeout 600 gemini -m "$MODEL" --output-format text -p "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
 
                 # Clean up temporary file
                 rm -f "$CUSTOM_PROMPT_FILE_TEMP"
@@ -878,7 +909,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
 
                 # Execute codex with model flag (non-interactive)
-                OUTPUT=$(timeout 300 codex -m "$MODEL" "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
+                OUTPUT=$(timeout 600 codex -m "$MODEL" "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
 
                 # Clean up temporary file
                 rm -f "$CUSTOM_PROMPT_FILE_TEMP"
@@ -907,7 +938,7 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
 
                 # Execute amp with -x flag for execute mode (non-interactive)
-                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 300 amp -x "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
+                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 600 amp -x "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
 
                 # Clean up temporary file
                 rm -f "$CUSTOM_PROMPT_FILE_TEMP"
