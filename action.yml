@@ -1,4 +1,4 @@
-name: "AutoAgent"
+name: "AutoAgentAI"
 description: "Composable GitHub Action to run AI agent prompts on a repository"
 author: "Eran Sandler"
 
