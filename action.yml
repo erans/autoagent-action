@@ -28,7 +28,7 @@ inputs:
     default: true
 
   agent:
-    description: "Which agent to use. Current default is cursor."
+    description: "Which agent to use. Supported: cursor, claude, gemini, codex, amp"
     required: false
     type: string
     default: "cursor"

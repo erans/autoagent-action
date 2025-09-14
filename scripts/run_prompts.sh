@@ -15,12 +15,31 @@ echo "DEBUG: Parsed arguments - RULES: '$RULES', CUSTOM_PROMPT: '$CUSTOM_PROMPT'
 ACTION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "DEBUG: Action directory: $ACTION_DIR"
 
-# Ensure cursor-agent is in PATH
-export PATH="$HOME/.cursor/bin:$PATH"
-echo "DEBUG: Updated PATH: $PATH"
+# Set up environment for different agents
+case "$AGENT" in
+    cursor)
+        export PATH="$HOME/.cursor/bin:$PATH"
+        MODEL="${MODEL:-gpt-5}"
+        ;;
+    claude)
+        # Claude Code uses Anthropic models
+        MODEL="${MODEL:-opus}"
+        ;;
+    gemini)
+        # Gemini CLI uses Google models
+        MODEL="${MODEL:-pro}"
+        ;;
+    codex)
+        # Codex CLI uses OpenAI models
+        MODEL="${MODEL:-gpt-5}"
+        ;;
+    amp)
+        # Amp Code uses Claude Sonnet by default
+        MODEL="${MODEL:-sonnet-4}"
+        ;;
+esac
 
-# Set default model if not provided
-MODEL="${MODEL:-gpt-5}"
+echo "DEBUG: Updated PATH: $PATH"
 
 echo "Running rules with agent: $AGENT"
 echo "Using model: $MODEL"
@@ -143,27 +162,19 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Environment variables:"
                 echo "DEBUG: CURSOR_API_KEY is set: $([ -n "${CURSOR_API_KEY:-}" ] && echo "YES" || echo "NO")"
                 echo "DEBUG: MODEL: $MODEL"
-                echo "DEBUG: PATH: $PATH"
-                echo "DEBUG: Which cursor-agent: $(which cursor-agent)"
                 echo "DEBUG: Starting cursor-agent execution..."
-                
+
                 # Create a temporary file for the prompt to handle multi-line text properly
                 PROMPT_FILE_TEMP=$(mktemp)
                 echo "$FULL_PROMPT" > "$PROMPT_FILE_TEMP"
                 echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
-                echo "DEBUG: Prompt file size: $(wc -c < "$PROMPT_FILE_TEMP") bytes"
-                
-                # Use cursor-agent with -p flag and file input
-                echo "DEBUG: Using cursor-agent with -p flag and file input..."
-                echo "DEBUG: Command: timeout 300 cursor-agent -p --output-format text --model \"$MODEL\" --force < \"$PROMPT_FILE_TEMP\""
-                echo "DEBUG: Environment check - CURSOR_API_KEY length: ${#CURSOR_API_KEY}"
-                
+
                 # Execute cursor-agent with -p flag
                 OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 300 cursor-agent -p --output-format text --model "$MODEL" --force < "$PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
-                
+
                 # Clean up temporary file
                 rm -f "$PROMPT_FILE_TEMP"
-                
+
                 echo "DEBUG: Raw cursor-agent output:"
                 echo "--- START RAW OUTPUT ---"
                 echo "$OUTPUT"
@@ -171,6 +182,138 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Output length: ${#OUTPUT}"
             else
                 OUTPUT="Error: cursor-agent not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        claude)
+            if command -v claude >/dev/null 2>&1; then
+                echo "DEBUG: Executing claude with prompt length: ${#FULL_PROMPT}"
+                echo "DEBUG: First 200 chars of prompt:"
+                echo "${FULL_PROMPT:0:200}"
+                echo "DEBUG: --- END PROMPT PREVIEW ---"
+                echo "DEBUG: Claude version:"
+                claude --version || echo "Version check failed"
+                echo "DEBUG: Environment variables:"
+                echo "DEBUG: ANTHROPIC_API_KEY is set: $([ -n "${ANTHROPIC_API_KEY:-}" ] && echo "YES" || echo "NO")"
+                echo "DEBUG: MODEL: $MODEL"
+                echo "DEBUG: Starting claude execution..."
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute claude with model flag and prompt from file
+                OUTPUT=$(timeout 300 claude --model "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw claude output:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: claude not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        gemini)
+            if command -v gemini >/dev/null 2>&1; then
+                echo "DEBUG: Executing gemini with prompt length: ${#FULL_PROMPT}"
+                echo "DEBUG: First 200 chars of prompt:"
+                echo "${FULL_PROMPT:0:200}"
+                echo "DEBUG: --- END PROMPT PREVIEW ---"
+                echo "DEBUG: Gemini version:"
+                gemini --version || echo "Version check failed"
+                echo "DEBUG: Environment variables:"
+                echo "DEBUG: GOOGLE_API_KEY is set: $([ -n "${GOOGLE_API_KEY:-}" ] && echo "YES" || echo "NO")"
+                echo "DEBUG: MODEL: $MODEL"
+                echo "DEBUG: Starting gemini execution..."
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute gemini with model flag and output format
+                OUTPUT=$(timeout 300 gemini -m "$MODEL" --output-format text -p "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw gemini output:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: gemini not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        codex)
+            if command -v codex >/dev/null 2>&1; then
+                echo "DEBUG: Executing codex with prompt length: ${#FULL_PROMPT}"
+                echo "DEBUG: First 200 chars of prompt:"
+                echo "${FULL_PROMPT:0:200}"
+                echo "DEBUG: --- END PROMPT PREVIEW ---"
+                echo "DEBUG: Codex version:"
+                codex --version || echo "Version check failed"
+                echo "DEBUG: Environment variables:"
+                echo "DEBUG: OPENAI_API_KEY is set: $([ -n "${OPENAI_API_KEY:-}" ] && echo "YES" || echo "NO")"
+                echo "DEBUG: MODEL: $MODEL"
+                echo "DEBUG: Starting codex execution..."
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute codex with model flag (non-interactive)
+                OUTPUT=$(timeout 300 codex -m "$MODEL" "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw codex output:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: codex not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        amp)
+            if command -v amp >/dev/null 2>&1; then
+                echo "DEBUG: Executing amp with prompt length: ${#FULL_PROMPT}"
+                echo "DEBUG: First 200 chars of prompt:"
+                echo "${FULL_PROMPT:0:200}"
+                echo "DEBUG: --- END PROMPT PREVIEW ---"
+                echo "DEBUG: Amp version:"
+                amp --version || echo "Version check failed"
+                echo "DEBUG: Environment variables:"
+                echo "DEBUG: AMP_API_KEY is set: $([ -n "${AMP_API_KEY:-}" ] && echo "YES" || echo "NO")"
+                echo "DEBUG: MODEL: $MODEL"
+                echo "DEBUG: Starting amp execution..."
+
+                # Create a temporary file for the prompt
+                PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_PROMPT" > "$PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary prompt file: $PROMPT_FILE_TEMP"
+
+                # Execute amp with -x flag for execute mode (non-interactive)
+                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 300 amp -x "$(cat "$PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
+
+                # Clean up temporary file
+                rm -f "$PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw amp output:"
+                echo "--- START RAW OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END RAW OUTPUT ---"
+                echo "DEBUG: Output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: amp not found. Please ensure it's installed or set install-agent: true"
             fi
             ;;
         *)
@@ -219,23 +362,18 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "${FULL_CUSTOM_PROMPT:0:200}"
                 echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
                 echo "DEBUG: Starting custom prompt execution..."
-                
-                # Create a temporary file for the custom prompt to handle multi-line text properly
+
+                # Create a temporary file for the custom prompt
                 CUSTOM_PROMPT_FILE_TEMP=$(mktemp)
                 echo "$FULL_CUSTOM_PROMPT" > "$CUSTOM_PROMPT_FILE_TEMP"
                 echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
-                echo "DEBUG: Custom prompt file size: $(wc -c < "$CUSTOM_PROMPT_FILE_TEMP") bytes"
-                
-                # Use cursor-agent with -p flag for custom prompt
-                echo "DEBUG: Using cursor-agent with -p flag for custom prompt..."
-                echo "DEBUG: Command: timeout 300 cursor-agent -p --output-format text --model \"$MODEL\" --force < \"$CUSTOM_PROMPT_FILE_TEMP\""
-                
+
                 # Execute cursor-agent with -p flag
                 OUTPUT=$(CURSOR_API_KEY="$CURSOR_API_KEY" timeout 300 cursor-agent -p --output-format text --model "$MODEL" --force < "$CUSTOM_PROMPT_FILE_TEMP" 2>&1 || echo "Error: Failed to execute cursor-agent")
-                
+
                 # Clean up temporary file
                 rm -f "$CUSTOM_PROMPT_FILE_TEMP"
-                
+
                 echo "DEBUG: Raw custom prompt output:"
                 echo "--- START CUSTOM OUTPUT ---"
                 echo "$OUTPUT"
@@ -243,6 +381,122 @@ $(cat "$COMMENT_PROMPT_FILE")"
                 echo "DEBUG: Custom output length: ${#OUTPUT}"
             else
                 OUTPUT="Error: cursor-agent not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        claude)
+            if command -v claude >/dev/null 2>&1; then
+                echo "DEBUG: Executing custom prompt with claude"
+                echo "DEBUG: Custom prompt length: ${#FULL_CUSTOM_PROMPT}"
+                echo "DEBUG: First 200 chars of custom prompt:"
+                echo "${FULL_CUSTOM_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
+                echo "DEBUG: Starting custom prompt execution..."
+
+                # Create a temporary file for the custom prompt
+                CUSTOM_PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_PROMPT" > "$CUSTOM_PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
+
+                # Execute claude with model flag and prompt from file
+                OUTPUT=$(timeout 300 claude --model "$MODEL" --output-format text -p "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute claude")
+
+                # Clean up temporary file
+                rm -f "$CUSTOM_PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw custom prompt output:"
+                echo "--- START CUSTOM OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END CUSTOM OUTPUT ---"
+                echo "DEBUG: Custom output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: claude not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        gemini)
+            if command -v gemini >/dev/null 2>&1; then
+                echo "DEBUG: Executing custom prompt with gemini"
+                echo "DEBUG: Custom prompt length: ${#FULL_CUSTOM_PROMPT}"
+                echo "DEBUG: First 200 chars of custom prompt:"
+                echo "${FULL_CUSTOM_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
+                echo "DEBUG: Starting custom prompt execution..."
+
+                # Create a temporary file for the custom prompt
+                CUSTOM_PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_PROMPT" > "$CUSTOM_PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
+
+                # Execute gemini with model flag and output format
+                OUTPUT=$(timeout 300 gemini -m "$MODEL" --output-format text -p "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute gemini")
+
+                # Clean up temporary file
+                rm -f "$CUSTOM_PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw custom prompt output:"
+                echo "--- START CUSTOM OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END CUSTOM OUTPUT ---"
+                echo "DEBUG: Custom output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: gemini not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        codex)
+            if command -v codex >/dev/null 2>&1; then
+                echo "DEBUG: Executing custom prompt with codex"
+                echo "DEBUG: Custom prompt length: ${#FULL_CUSTOM_PROMPT}"
+                echo "DEBUG: First 200 chars of custom prompt:"
+                echo "${FULL_CUSTOM_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
+                echo "DEBUG: Starting custom prompt execution..."
+
+                # Create a temporary file for the custom prompt
+                CUSTOM_PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_PROMPT" > "$CUSTOM_PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
+
+                # Execute codex with model flag (non-interactive)
+                OUTPUT=$(timeout 300 codex -m "$MODEL" "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute codex")
+
+                # Clean up temporary file
+                rm -f "$CUSTOM_PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw custom prompt output:"
+                echo "--- START CUSTOM OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END CUSTOM OUTPUT ---"
+                echo "DEBUG: Custom output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: codex not found. Please ensure it's installed or set install-agent: true"
+            fi
+            ;;
+        amp)
+            if command -v amp >/dev/null 2>&1; then
+                echo "DEBUG: Executing custom prompt with amp"
+                echo "DEBUG: Custom prompt length: ${#FULL_CUSTOM_PROMPT}"
+                echo "DEBUG: First 200 chars of custom prompt:"
+                echo "${FULL_CUSTOM_PROMPT:0:200}"
+                echo "DEBUG: --- END CUSTOM PROMPT PREVIEW ---"
+                echo "DEBUG: Starting custom prompt execution..."
+
+                # Create a temporary file for the custom prompt
+                CUSTOM_PROMPT_FILE_TEMP=$(mktemp)
+                echo "$FULL_CUSTOM_PROMPT" > "$CUSTOM_PROMPT_FILE_TEMP"
+                echo "DEBUG: Created temporary custom prompt file: $CUSTOM_PROMPT_FILE_TEMP"
+
+                # Execute amp with -x flag for execute mode (non-interactive)
+                OUTPUT=$(AMP_API_KEY="$AMP_API_KEY" timeout 300 amp -x "$(cat "$CUSTOM_PROMPT_FILE_TEMP")" 2>&1 || echo "Error: Failed to execute amp")
+
+                # Clean up temporary file
+                rm -f "$CUSTOM_PROMPT_FILE_TEMP"
+
+                echo "DEBUG: Raw custom prompt output:"
+                echo "--- START CUSTOM OUTPUT ---"
+                echo "$OUTPUT"
+                echo "--- END CUSTOM OUTPUT ---"
+                echo "DEBUG: Custom output length: ${#OUTPUT}"
+            else
+                OUTPUT="Error: amp not found. Please ensure it's installed or set install-agent: true"
             fi
             ;;
         *)
