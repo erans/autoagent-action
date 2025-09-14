@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
@@ -69,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
@@ -103,7 +103,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         with:
@@ -137,7 +137,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
@@ -171,7 +171,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           AMP_API_KEY: ${{ secrets.AMP_API_KEY }}
         with:
@@ -232,7 +232,7 @@ jobs:
         with:
           fetch-depth: 0  # Required for proper changed file detection
       - name: Run AutoAgent on Changed Files
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
@@ -281,7 +281,7 @@ jobs:
         with:
           fetch-depth: 0  # Required for proper changed file detection
       - name: Run AutoAgent on Entire Codebase
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
@@ -356,7 +356,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
@@ -393,7 +393,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run AutoAgent
-        uses: erans/autoagent@v1
+        uses: erans/autoagent@main
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         with:
