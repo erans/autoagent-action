@@ -390,7 +390,7 @@ Database queries look optimized. Consider adding indexes for the new columns.
 
 - **`MODEL`** - Optional AI model to use. Defaults vary by agent:
   - Cursor: `gpt-5`
-  - Claude: `sonnet-4` (also supports `opus-4`, `haiku`)
+  - Claude: `claude-sonnet-4` (also supports `claude-opus-4`, `claude-haiku`)
   - Gemini: `pro` (also supports `flash`)
   - Codex: `gpt-5` (also supports `o3`, `o1`)
   - Amp: `sonnet-4` (also supports `gpt-5`)

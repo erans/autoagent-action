@@ -24,7 +24,7 @@ case "$AGENT" in
         ;;
     claude)
         # Claude Code uses Anthropic models
-        MODEL="${MODEL:-sonnet-4}"
+        MODEL="${MODEL:-claude-sonnet-4}"
         ;;
     gemini)
         # Gemini CLI uses Google models
