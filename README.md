@@ -12,6 +12,8 @@ A composable GitHub Action that integrates with AI agents like [Cursor CLI](http
 - **Multiple Agents Support**: Supports multiple AI coding agents: `cursor`, `claude`, `gemini`, `codex`, and `amp`
 - **Configurable Scope**: Analyze only changed files (fast) or entire codebase (comprehensive)
 - **PR Comment Output**: Posts results back to GitHub PR comments in a structured format
+- **Composable Python Architecture**: Built with maintainable, modular Python code for better reliability and extensibility
+- **Configurable Logging**: Debug mode for troubleshooting with detailed execution information
 
 ## Usage
 
@@ -295,7 +297,17 @@ jobs:
 
 ### Troubleshooting Changed Files Detection
 
-If you see `"No changed files detected"` in the debug output, try these solutions:
+If you see `"No changed files detected"` in the output, enable debug logging first to get detailed information:
+
+```yaml
+- name: Run AutoAgent with Debug
+  uses: erans/autoagent@main
+  with:
+    logging: debug  # Enable detailed debugging
+    # ... other parameters
+```
+
+Then try these solutions based on the debug output:
 
 #### **Issue: Shallow Clone**
 ```yaml
@@ -407,6 +419,48 @@ jobs:
           install-agent: true
           agent: cursor
 ```
+
+### Debug Logging Example
+
+Enable debug logging to troubleshoot issues with file detection, agent execution, or other problems:
+
+```yaml
+name: AutoAgent with Debug Logging
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  autoagent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for proper changed file detection
+      - name: Run AutoAgent with Debug Output
+        uses: erans/autoagent@main
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        with:
+          rules: |
+            - owasp-check
+            - code-review
+          logging: debug  # Enable detailed debugging output
+          agent: cursor
+```
+
+**Debug logging includes:**
+- Detailed git diff strategies and results
+- Changed file detection process
+- Agent execution details and prompt lengths
+- Rule processing steps and timings
+- Error details and troubleshooting information
 
 ### Custom Rule Files Examples
 
@@ -580,6 +634,7 @@ Custom rule files appear in PR comments using just the filename (without path or
 | `install-agent` | Boolean | ❌ No | `true` | Whether to install the agent automatically |
 | `agent` | String | ❌ No | `cursor` | Which agent to use (`cursor`, `claude`, `gemini`, `codex`, `amp`) |
 | `scope` | String | ❌ No | `changed` | Analysis scope: `changed` for PR files only, `all` for entire codebase |
+| `logging` | String | ❌ No | `info` | Logging level: `info` for normal output, `debug` for detailed debugging information |
 
 ## Predefined Rules
 

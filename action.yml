@@ -45,6 +45,12 @@ inputs:
     type: string
     default: "changed"
 
+  logging:
+    description: "Logging level: 'info' for normal output, 'debug' for detailed debugging information"
+    required: false
+    type: string
+    default: "info"
+
 runs:
   using: "composite"
   steps:
@@ -57,7 +63,9 @@ runs:
       shell: bash
       env:
         MODEL: ${{ env.MODEL }}
-      run: ${{ github.action_path }}/scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}" "${{ inputs.scope }}" "${{ inputs.customFiles }}"
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+        LOGGING_LEVEL: ${{ inputs.logging }}
+      run: python3 ${{ github.action_path }}/scripts/run_prompts.py "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}" "${{ inputs.scope }}" "${{ inputs.customFiles }}"
 
     - name: Post Results as PR Comment
       if: ${{ inputs.action == 'comment' }}
