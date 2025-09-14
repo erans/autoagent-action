@@ -54,28 +54,77 @@ if [ "$SCOPE" = "all" ]; then
 else
     echo "DEBUG: Scope is 'changed' - running git diff commands to detect changed files"
 
+    # First, ensure we have the necessary git references for GitHub Actions
+    echo "DEBUG: Ensuring base branch references are available"
+    git fetch origin main:main 2>/dev/null || git fetch origin main 2>/dev/null || echo "DEBUG: Could not fetch origin/main"
+
     # Try multiple strategies to detect ALL changed files in the PR
-    echo "DEBUG: Trying git diff --name-only origin/main...HEAD (three dots for merge-base)"
-    CHANGED_FILES=$(git diff --name-only origin/main...HEAD 2>&1) || {
-        echo "DEBUG: Three-dot diff failed with output: $CHANGED_FILES"
-        echo "DEBUG: Trying git diff --name-only origin/main..HEAD (two dots)"
-        CHANGED_FILES=$(git diff --name-only origin/main..HEAD 2>&1) || {
-            echo "DEBUG: Two-dot diff failed with output: $CHANGED_FILES"
-            echo "DEBUG: Trying git diff --name-only main...HEAD"
-            CHANGED_FILES=$(git diff --name-only main...HEAD 2>&1) || {
-                echo "DEBUG: main...HEAD diff failed with output: $CHANGED_FILES"
-                echo "DEBUG: Trying git diff --name-only main..HEAD"
-                CHANGED_FILES=$(git diff --name-only main..HEAD 2>&1) || {
-                    echo "DEBUG: main..HEAD diff failed with output: $CHANGED_FILES"
-                    echo "DEBUG: Fallback: trying git diff --name-only HEAD~1 HEAD"
-                    CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>&1) || {
-                        echo "DEBUG: Final fallback failed with output: $CHANGED_FILES"
+    echo "DEBUG: Strategy 1: Using merge-base with explicit calculation"
+    MERGE_BASE=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || echo "")
+    if [ -n "$MERGE_BASE" ]; then
+        echo "DEBUG: Found merge-base: $MERGE_BASE"
+        CHANGED_FILES=$(git diff --name-only "$MERGE_BASE" HEAD 2>&1) || CHANGED_FILES=""
+        echo "DEBUG: Merge-base diff result: $CHANGED_FILES"
+    else
+        echo "DEBUG: Could not determine merge-base"
+        CHANGED_FILES=""
+    fi
+
+    # Strategy 2: Try three-dot syntax if merge-base failed
+    if [ -z "$CHANGED_FILES" ] || echo "$CHANGED_FILES" | grep -q "fatal:\|error:"; then
+        echo "DEBUG: Strategy 2: Trying git diff --name-only origin/main...HEAD (three dots for merge-base)"
+        CHANGED_FILES=$(git diff --name-only origin/main...HEAD 2>&1) || {
+            echo "DEBUG: Three-dot diff failed with output: $CHANGED_FILES"
+            echo "DEBUG: Strategy 3: Trying git diff --name-only origin/main..HEAD (two dots)"
+            CHANGED_FILES=$(git diff --name-only origin/main..HEAD 2>&1) || {
+                echo "DEBUG: Two-dot diff failed with output: $CHANGED_FILES"
+                echo "DEBUG: Strategy 4: Trying git diff --name-only main...HEAD"
+                CHANGED_FILES=$(git diff --name-only main...HEAD 2>&1) || {
+                    echo "DEBUG: main...HEAD diff failed with output: $CHANGED_FILES"
+                    echo "DEBUG: Strategy 5: Trying git diff --name-only main..HEAD"
+                    CHANGED_FILES=$(git diff --name-only main..HEAD 2>&1) || {
+                        echo "DEBUG: main..HEAD diff failed with output: $CHANGED_FILES"
                         CHANGED_FILES=""
                     }
                 }
             }
         }
-    }
+    fi
+
+    # Strategy 6: GitHub API fallback (if in GitHub Actions environment)
+    if [ -z "$CHANGED_FILES" ] || echo "$CHANGED_FILES" | grep -q "fatal:\|error:"; then
+        if [ -n "${GITHUB_EVENT_NUMBER:-}" ] && command -v gh >/dev/null 2>&1; then
+            echo "DEBUG: Strategy 6: Using GitHub API to get changed files"
+            CHANGED_FILES=$(gh api repos/"$GITHUB_REPOSITORY"/pulls/"$GITHUB_EVENT_NUMBER"/files --jq '.[].filename' 2>&1 | tr '\n' ' ') || {
+                echo "DEBUG: GitHub API fallback failed with output: $CHANGED_FILES"
+                CHANGED_FILES=""
+            }
+            echo "DEBUG: GitHub API result: $CHANGED_FILES"
+        else
+            echo "DEBUG: GitHub API fallback not available (missing GITHUB_EVENT_NUMBER or gh command)"
+        fi
+    fi
+
+    # Strategy 7: Merge commit detection
+    if [ -z "$CHANGED_FILES" ] || echo "$CHANGED_FILES" | grep -q "fatal:\|error:"; then
+        echo "DEBUG: Strategy 7: Checking if HEAD is a merge commit"
+        if git show --format="%P" -s HEAD | grep -q ' '; then
+            echo "DEBUG: HEAD is a merge commit, getting files from merge"
+            CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD 2>&1) || CHANGED_FILES=""
+            echo "DEBUG: Merge commit files: $CHANGED_FILES"
+        else
+            echo "DEBUG: HEAD is not a merge commit"
+        fi
+    fi
+
+    # Strategy 8: Final fallback - single commit diff
+    if [ -z "$CHANGED_FILES" ] || echo "$CHANGED_FILES" | grep -q "fatal:\|error:"; then
+        echo "DEBUG: Strategy 8: Final fallback - single commit diff"
+        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>&1) || {
+            echo "DEBUG: Final fallback failed with output: $CHANGED_FILES"
+            CHANGED_FILES=""
+        }
+    fi
 
     echo "DEBUG: Raw git diff output:"
     echo "--- START GIT DIFF OUTPUT ---"

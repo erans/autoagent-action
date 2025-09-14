@@ -205,6 +205,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for proper changed file detection
       - name: Run AutoAgent on Changed Files
         uses: erans/autoagent@v1
         env:
@@ -236,6 +238,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for proper changed file detection
       - name: Run AutoAgent on Entire Codebase
         uses: erans/autoagent@v1
         env:
@@ -375,6 +379,7 @@ Database queries look optimized. Consider adding indexes for the new columns.
 - For JSON parsing: `jq`
 - **Node.js** - Required for installing npm-based agents (Claude, Gemini, Codex)
 - **API Key** - Required for your chosen agent (see Environment Variables section)
+- **Git History** - Use `fetch-depth: 0` in checkout action for proper changed file detection
 
 ## Environment Variables
 
