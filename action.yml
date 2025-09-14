@@ -1,7 +1,9 @@
 name: "AutoAgentAI Action"
 description: "Composable GitHub Action to run AI agent prompts on a repository"
 author: "Eran Sandler"
-
+branding:
+  icon: 'activity'
+  color: 'purple'
 inputs:
   rules:
     description: "YAML or JSON list of predefined rules to execute."
