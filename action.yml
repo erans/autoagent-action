@@ -33,6 +33,12 @@ inputs:
     type: string
     default: "cursor"
 
+  scope:
+    description: "Analysis scope: 'changed' to analyze only PR changed files, 'all' to analyze entire codebase"
+    required: false
+    type: string
+    default: "changed"
+
 runs:
   using: "composite"
   steps:
@@ -45,7 +51,7 @@ runs:
       shell: bash
       env:
         MODEL: ${{ env.MODEL }}
-      run: ${{ github.action_path }}/scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}"
+      run: ${{ github.action_path }}/scripts/run_prompts.sh "${{ inputs.rules }}" "${{ inputs.custom }}" "${{ inputs.agent }}" "${{ inputs.scope }}"
 
     - name: Post Results as PR Comment
       if: ${{ inputs.action == 'comment' }}

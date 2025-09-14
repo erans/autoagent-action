@@ -10,6 +10,7 @@ A composable GitHub Action that integrates with AI agents like [Cursor CLI](http
 - **Custom Prompt Support**: Extend analysis with team-specific custom instructions
 - **Agent Auto Installation**: Automatically installs the agent unless explicitly disabled
 - **Multiple Agents Support**: Supports multiple AI coding agents: `cursor`, `claude`, `gemini`, `codex`, and `amp`
+- **Configurable Scope**: Analyze only changed files (fast) or entire codebase (comprehensive)
 - **PR Comment Output**: Posts results back to GitHub PR comments in a structured format
 
 ## Usage
@@ -184,6 +185,70 @@ jobs:
           agent: amp
 ```
 
+### Scope Configuration Examples
+
+#### Analyze Only Changed Files (Default - Faster)
+```yaml
+name: AutoAgent - Changed Files Only
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  autoagent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AutoAgent on Changed Files
+        uses: erans/autoagent@v1
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        with:
+          rules: |
+            - owasp-check
+            - code-review
+          scope: "changed"  # This is the default
+          action: comment
+          agent: cursor
+```
+
+#### Analyze Entire Codebase (Comprehensive)
+```yaml
+name: AutoAgent - Full Codebase Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  autoagent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AutoAgent on Entire Codebase
+        uses: erans/autoagent@v1
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        with:
+          rules: |
+            - owasp-check
+            - code-review
+          scope: "all"  # Analyze entire codebase
+          action: comment
+          agent: cursor
+```
+
 ### Advanced Example
 
 ```yaml
@@ -265,6 +330,7 @@ jobs:
 | `action` | Enum | ✅ Yes | `comment` | What to do with results (currently `comment` only) |
 | `install-agent` | Boolean | ❌ No | `true` | Whether to install the agent automatically |
 | `agent` | String | ❌ No | `cursor` | Which agent to use (`cursor`, `claude`, `gemini`, `codex`, `amp`) |
+| `scope` | String | ❌ No | `changed` | Analysis scope: `changed` for PR files only, `all` for entire codebase |
 
 ## Predefined Rules
 
@@ -323,7 +389,7 @@ Database queries look optimized. Consider adding indexes for the new columns.
 
 - **`MODEL`** - Optional AI model to use. Defaults vary by agent:
   - Cursor: `gpt-5`
-  - Claude: `opus` (also supports `sonnet`, `haiku`)
+  - Claude: `sonnet-4` (also supports `opus-4`, `haiku`)
   - Gemini: `pro` (also supports `flash`)
   - Codex: `gpt-5` (also supports `o3`, `o1`)
   - Amp: `sonnet-4` (also supports `gpt-5`)

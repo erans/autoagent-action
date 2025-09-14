@@ -7,9 +7,10 @@ echo "DEBUG: Arguments received: $*"
 RULES="${1:-}"
 CUSTOM_PROMPT="${2:-}"
 AGENT="${3:-cursor}"
+SCOPE="${4:-changed}"
 RESULT_FILE="results.json"
 
-echo "DEBUG: Parsed arguments - RULES: '$RULES', CUSTOM_PROMPT: '$CUSTOM_PROMPT', AGENT: '$AGENT'"
+echo "DEBUG: Parsed arguments - RULES: '$RULES', CUSTOM_PROMPT: '$CUSTOM_PROMPT', AGENT: '$AGENT', SCOPE: '$SCOPE'"
 
 # Get the action directory (where this script is located)
 ACTION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -23,7 +24,7 @@ case "$AGENT" in
         ;;
     claude)
         # Claude Code uses Anthropic models
-        MODEL="${MODEL:-opus}"
+        MODEL="${MODEL:-sonnet-4}"
         ;;
     gemini)
         # Gemini CLI uses Google models
@@ -43,6 +44,24 @@ echo "DEBUG: Updated PATH: $PATH"
 
 echo "Running rules with agent: $AGENT"
 echo "Using model: $MODEL"
+echo "Using scope: $SCOPE"
+
+# Get file context based on scope
+if [ "$SCOPE" = "all" ]; then
+    FILE_CONTEXT="Analyze the entire codebase in this repository."
+    CHANGED_FILES=""
+    echo "DEBUG: Scope is 'all' - analyzing entire codebase"
+else
+    CHANGED_FILES=$(git diff --name-only origin/main..HEAD 2>/dev/null || git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+    if [ -n "$CHANGED_FILES" ]; then
+        FILE_CONTEXT="Focus ONLY on these files changed in this PR: $CHANGED_FILES"
+        echo "DEBUG: Scope is 'changed' - found changed files: $CHANGED_FILES"
+    else
+        FILE_CONTEXT="No changed files detected. Analyze the current repository state."
+        echo "DEBUG: Scope is 'changed' but no changed files detected"
+    fi
+fi
+echo "DEBUG: File context: $FILE_CONTEXT"
 
 # Validate inputs
 if [ -z "$RULES" ] && [ -z "$CUSTOM_PROMPT" ]; then
@@ -140,9 +159,19 @@ echo "$RULES_ARRAY" | while read -r RULE; do
     fi
     echo "DEBUG: Comment prompt file found, loading content..."
     
-    # Combine base prompt with rule-specific prompt and comment formatting
+    # Combine base prompt with scope context, rule-specific prompt and comment formatting
     echo "DEBUG: About to combine prompts..."
     FULL_PROMPT="$(cat "$BASE_PROMPT_FILE")
+
+## Analysis Scope
+$FILE_CONTEXT
+
+You have access to git commands to see changes:
+- git diff --name-only origin/main..HEAD (or HEAD~1 HEAD)
+- git diff origin/main..HEAD -- <filename>
+- git show --name-only HEAD
+
+Use these commands as needed for your analysis.
 
 $(cat "$PROMPT_FILE")
 
@@ -345,8 +374,18 @@ if [ -n "$CUSTOM_PROMPT" ]; then
         exit 1
     fi
     
-    # Combine base prompt with custom prompt and comment formatting
+    # Combine base prompt with scope context, custom prompt and comment formatting
     FULL_CUSTOM_PROMPT="$(cat "$BASE_PROMPT_FILE")
+
+## Analysis Scope
+$FILE_CONTEXT
+
+You have access to git commands to see changes:
+- git diff --name-only origin/main..HEAD (or HEAD~1 HEAD)
+- git diff origin/main..HEAD -- <filename>
+- git show --name-only HEAD
+
+Use these commands as needed for your analysis.
 
 ${CUSTOM_PROMPT}
 
