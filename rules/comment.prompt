@@ -13,9 +13,9 @@ Your response should be:
 
 Example format:
 ```
-## 🔍 Analysis Results
-
 [Brief 1-2 sentence summary of findings with actionable next steps]
 
 [Optional: Inline compare link if applicable]
 ```
+
+**Note: Do not include a title or header - the system will automatically add appropriate headers.**
