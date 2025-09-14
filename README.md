@@ -15,6 +15,15 @@ A composable GitHub Action that integrates with AI agents like [Cursor CLI](http
 - **Composable Python Architecture**: Built with maintainable, modular Python code for better reliability and extensibility
 - **Configurable Logging**: Debug mode for troubleshooting with detailed execution information
 
+## Suggested Future Work
+
+I would love to get feedback if this is working well and if any of these future work items seems relevant to you:
+
+1. **Ability to stop merge if there are high vulnerability items in AutoAgent** - Block PRs automatically when critical security issues are detected
+2. **Ability to have other actions other than commenting** - Support for email notifications, Slack messages, or other integrations for important findings
+3. **Ability to fail a build if AutoAgent has important enough failures** - Set exit codes based on severity levels to integrate with CI/CD pipeline failure conditions
+4. **Ability to execute rules in parallel** - Run multiple rules concurrently to reduce overall analysis time and improve CI/CD performance
+
 ## Usage
 
 ### Basic Example with Cursor
