@@ -185,7 +185,31 @@ jobs:
           agent: amp
 ```
 
-### Scope Configuration Examples
+### Analysis Scope Configuration
+
+AutoAgent supports two analysis modes controlled by the `scope` parameter:
+
+#### 🚀 **Changed Files Mode (Default)** - `scope: "changed"`
+
+This mode analyzes only files that have been modified in the Pull Request, making it faster and more cost-effective by focusing AI analysis on the actual changes.
+
+**How it works:**
+- Automatically detects all files changed in the PR across all commits
+- Uses multiple git diff strategies for maximum compatibility
+- Provides changed file list context to AI agents
+- Falls back to GitHub API when git history is insufficient
+- Works with merge commits, rebases, and complex PR scenarios
+
+**Key Benefits:**
+- ⚡ **Faster execution** - Only processes changed files
+- 💰 **Token efficient** - Reduces API costs significantly
+- 🎯 **Focused analysis** - AI concentrates on actual changes
+- 🔄 **Auto-detection** - Handles complex git scenarios automatically
+
+**Requirements for Changed Files Mode:**
+- Must use `fetch-depth: 0` in checkout action (see examples below)
+- Requires GitHub CLI (`gh`) for API fallback
+- Works best with proper base branch setup
 
 #### Analyze Only Changed Files (Default - Faster)
 ```yaml
@@ -220,6 +244,22 @@ jobs:
           agent: cursor
 ```
 
+#### 🔍 **Full Codebase Mode** - `scope: "all"`
+
+This mode performs comprehensive analysis of the entire repository codebase, useful for security audits, architectural reviews, or when you need complete coverage.
+
+**When to use:**
+- Security audits requiring full codebase review
+- Architectural analysis and refactoring suggestions
+- Initial code quality assessment
+- Compliance reviews and documentation checks
+
+**Trade-offs:**
+- ⏱️ **Slower execution** - Processes entire codebase
+- 💸 **Higher cost** - Uses more API tokens
+- 📊 **Comprehensive coverage** - No missed dependencies or context
+- 🔎 **Deep analysis** - Can catch broader architectural issues
+
 #### Analyze Entire Codebase (Comprehensive)
 ```yaml
 name: AutoAgent - Full Codebase Analysis
@@ -251,6 +291,49 @@ jobs:
           scope: "all"  # Analyze entire codebase
           action: comment
           agent: cursor
+```
+
+### Troubleshooting Changed Files Detection
+
+If you see `"No changed files detected"` in the debug output, try these solutions:
+
+#### **Issue: Shallow Clone**
+```yaml
+# ❌ This may cause detection issues
+- uses: actions/checkout@v4
+
+# ✅ Use this instead
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0  # Required for changed file detection
+```
+
+#### **Issue: Missing Base Branch**
+The action automatically fetches the base branch, but ensure your workflow runs on pull request events:
+
+```yaml
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]  # All required events
+```
+
+#### **Issue: Complex Merge Scenarios**
+AutoAgent uses 8 different detection strategies including:
+- Merge-base calculation
+- GitHub API fallback
+- Merge commit detection
+- Multiple git diff approaches
+
+Check the debug output to see which strategy succeeded.
+
+#### **Issue: Permissions**
+Ensure your workflow has proper permissions:
+
+```yaml
+permissions:
+  contents: read        # Required for checkout
+  pull-requests: write  # Required for comments
+  issues: write         # Required for GitHub API
 ```
 
 ### Advanced Example

@@ -40,9 +40,7 @@ echo "  GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME:-not set}"
 echo "  GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-not set}"
 
 # Build comment body
-COMMENT_BODY="# 🤖 AutoAgent Results
-
-"
+COMMENT_BODY=""
 
 # Process each result
 while read -r LINE; do
@@ -57,7 +55,7 @@ while read -r LINE; do
     # Don't escape the output since agents return markdown-formatted text
     # Just use the raw output to preserve markdown formatting
 
-    COMMENT_BODY+="## $RULE Analysis Result"$'\n\n'
+    COMMENT_BODY+="## 🔍 $RULE Analysis Result"$'\n\n'
     COMMENT_BODY+="$OUTPUT"$'\n\n'
 done < <(jq -c '.[]' "$RESULT_FILE")
 
