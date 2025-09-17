@@ -2,14 +2,14 @@
 
 > **⚠️ Experimental Project**: This project was created during a hackathon at the Cursor offices on September 10, 2025. Use at your own risk. Future updates will focus on making it production CI/CD ready. 🚧  - Thank you to the Curosr team for hosting!
 
-A composable GitHub Action that integrates with AI agents like [Cursor CLI](https://cursor.com/cli), [Claude Code](https://claude.ai/code), [Gemini CLI](https://github.com/google-gemini/gemini-cli), [Codex CLI](https://github.com/openai/codex), and [Amp Code](https://ampcode.com/) to run prompts on a repository as part of Pull Request workflows.
+A composable GitHub Action that integrates with AI agents like [Cursor CLI](https://cursor.com/cli), [Claude Code](https://claude.ai/code), [Gemini CLI](https://github.com/google-gemini/gemini-cli), [Codex CLI](https://github.com/openai/codex), [Amp Code](https://ampcode.com/), and [OpenCode](https://opencode.ai/) to run prompts on a repository as part of Pull Request workflows.
 
 ## Features
 
 - **Predefined Rules**: Run curated rules like OWASP security checks or refactoring suggestions
 - **Custom Prompt Support**: Extend analysis with team-specific custom instructions
 - **Agent Auto Installation**: Automatically installs the agent unless explicitly disabled
-- **Multiple Agents Support**: Supports multiple AI coding agents: `cursor`, `claude`, `gemini`, `codex`, and `amp`
+- **Multiple Agents Support**: Supports multiple AI coding agents: `cursor`, `claude`, `gemini`, `codex`, `amp`, and `opencode`
 - **Configurable Scope**: Analyze only changed files (fast) or entire codebase (comprehensive)
 - **PR Comment Output**: Posts results back to GitHub PR comments in a structured format
 - **Composable Python Architecture**: Built with maintainable, modular Python code for better reliability and extensibility
@@ -194,6 +194,66 @@ jobs:
           action: comment
           install-agent: true
           agent: amp
+```
+
+### Example with OpenCode
+
+OpenCode supports multiple AI providers (Anthropic, OpenAI, Google, etc.) and automatically uses the appropriate API key based on the model you specify:
+
+```yaml
+name: AutoAgent with OpenCode
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  autoagent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AutoAgent
+        uses: erans/autoagent@main
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          MODEL: anthropic/claude-sonnet-4-20250514
+        with:
+          rules: |
+            - owasp-check
+            - code-review
+          custom: |
+            Please check for inefficient SQL queries and suggest optimizations.
+          action: comment
+          install-agent: true
+          agent: opencode
+```
+
+#### OpenCode Model Examples
+
+You can specify different providers and models:
+
+```yaml
+# Using Anthropic Claude
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  MODEL: anthropic/claude-sonnet-4-20250514
+
+# Using OpenAI GPT
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  MODEL: openai/gpt-4
+
+# Using Google Gemini
+env:
+  GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+  MODEL: google/gemini-pro
 ```
 
 ### Analysis Scope Configuration
@@ -641,7 +701,7 @@ Custom rule files appear in PR comments using just the filename (without path or
 | `customFiles` | String (YAML/JSON list) | ❌ No | `[]` | Custom .prompt files to execute (supports relative and absolute paths) |
 | `action` | Enum | ✅ Yes | `comment` | What to do with results (currently `comment` only) |
 | `install-agent` | Boolean | ❌ No | `true` | Whether to install the agent automatically |
-| `agent` | String | ❌ No | `cursor` | Which agent to use (`cursor`, `claude`, `gemini`, `codex`, `amp`) |
+| `agent` | String | ❌ No | `cursor` | Which agent to use (`cursor`, `claude`, `gemini`, `codex`, `amp`, `opencode`) |
 | `scope` | String | ❌ No | `changed` | Analysis scope: `changed` for PR files only, `all` for entire codebase |
 | `logging` | String | ❌ No | `info` | Logging level: `info` for normal output, `debug` for detailed debugging information |
 
@@ -701,6 +761,17 @@ Database queries look optimized. Consider adding indexes for the new columns.
 - **`OPENAI_API_KEY`** - Required for Codex CLI authentication
 - **`AMP_API_KEY`** - Required for Amp Code authentication
 
+### OpenCode Multi-Provider Support:
+
+OpenCode supports multiple AI providers. Set the appropriate API key(s) based on the model you want to use:
+
+- **`ANTHROPIC_API_KEY`** - For Anthropic Claude models (`anthropic/claude-sonnet-4-20250514`)
+- **`OPENAI_API_KEY`** - For OpenAI models (`openai/gpt-4`, `openai/o1`)
+- **`GOOGLE_API_KEY`** - For Google Gemini models (`google/gemini-pro`)
+- **`GROQ_API_KEY`** - For Groq models (`groq/llama-3-70b`)
+- **`COHERE_API_KEY`** - For Cohere models (`cohere/command-r`)
+- **`MISTRAL_API_KEY`** - For Mistral models (`mistral/large`)
+
 ### Optional:
 
 - **`MODEL`** - Optional AI model to use. Defaults vary by agent:
@@ -709,6 +780,7 @@ Database queries look optimized. Consider adding indexes for the new columns.
   - Gemini: `pro` (also supports `flash`)
   - Codex: `gpt-5` (also supports `o3`, `o1`)
   - Amp: `sonnet-4` (also supports `gpt-5`)
+  - OpenCode: `anthropic/claude-sonnet-4-20250514` (supports 75+ models across providers)
 
 ## Permissions
 
@@ -775,6 +847,38 @@ The action requires an API key environment variable to be set as a repository se
    - Your API key will be stored locally and can be found in the credentials file
 
 2. **Add the secret**: Add `AMP_API_KEY` as a repository secret
+
+#### For OpenCode:
+
+OpenCode supports multiple AI providers, so you can set up one or more API keys based on which models you want to use:
+
+1. **For Anthropic Claude models** (recommended):
+   - Go to [Anthropic Console](https://console.anthropic.com/)
+   - Navigate to **API Keys**
+   - Create a new API key or copy an existing one
+   - Add `ANTHROPIC_API_KEY` as a repository secret
+
+2. **For OpenAI models**:
+   - Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Create a new API key or use an existing one
+   - Add `OPENAI_API_KEY` as a repository secret
+
+3. **For Google Gemini models**:
+   - Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - Create a new API key or use an existing one
+   - Add `GOOGLE_API_KEY` as a repository secret
+
+4. **For other providers** (optional):
+   - **Groq**: Get API key from [Groq Console](https://console.groq.com/) → Add `GROQ_API_KEY`
+   - **Cohere**: Get API key from [Cohere Dashboard](https://dashboard.cohere.ai/) → Add `COHERE_API_KEY`
+   - **Mistral**: Get API key from [Mistral Platform](https://console.mistral.ai/) → Add `MISTRAL_API_KEY`
+
+5. **Set the model**: Use the `MODEL` environment variable to specify which provider/model to use:
+   - `anthropic/claude-sonnet-4-20250514` (default)
+   - `openai/gpt-4`
+   - `google/gemini-pro`
+   - `groq/llama-3-70b`
+   - And many more...
 
 #### Steps to add any secret to your repository:
 - Go to your GitHub repository

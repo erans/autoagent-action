@@ -1,6 +1,6 @@
 # AutoAgent Project Structure
 
-AutoAgent is a composable GitHub Action that integrates with AI agents (currently Cursor CLI) to run automated code analysis and prompts on repositories as part of Pull Request workflows.
+AutoAgent is a composable GitHub Action that integrates with multiple AI agents (Cursor CLI, Claude Code, Gemini CLI, Codex CLI, Amp Code, and OpenCode) to run automated code analysis and prompts on repositories as part of Pull Request workflows.
 
 ## Project Overview
 
@@ -43,8 +43,8 @@ Contains the main execution logic for the GitHub Action:
 
 | File | Purpose |
 |------|---------|
-| `install_agent.sh` | Installs the specified AI agent (currently supports Cursor CLI) |
-| `run_prompts.sh` | Executes predefined rules and custom prompts using the selected agent |
+| `install_agent.sh` | Installs the specified AI agent (supports Cursor, Claude, Gemini, Codex, Amp, OpenCode) |
+| `run_prompts.py` | Python-based execution engine for rules and custom prompts using the selected agent |
 | `post_comment.sh` | Posts analysis results as formatted comments to the GitHub PR |
 
 ## File Types and Their Roles
@@ -62,8 +62,8 @@ Contains the main execution logic for the GitHub Action:
 
 All scripts follow bash best practices with `set -euo pipefail` for error handling:
 
-- **`install_agent.sh`**: Handles agent installation with support for multiple agent types
-- **`run_prompts.sh`**: Core execution engine that:
+- **`install_agent.sh`**: Handles agent installation with support for multiple agent types (cursor, claude, gemini, codex, amp, opencode)
+- **`run_prompts.py`**: Python-based core execution engine that:
   - Parses rule inputs (YAML/JSON) or handles empty rules
   - Combines base context with rule-specific prompts
   - Appends comment formatting instructions to all prompts
@@ -103,23 +103,69 @@ All scripts follow bash best practices with `set -euo pipefail` for error handli
 ## Key Features
 
 - **Modular Design**: Each component (installation, execution, posting) is separate and testable
-- **Agent Agnostic**: Architecture supports multiple AI agents (currently Cursor, extensible to others)
+- **Multi-Agent Support**: Architecture supports multiple AI agents (Cursor, Claude, Gemini, Codex, Amp, OpenCode)
 - **Error Handling**: Comprehensive error checking and graceful failure modes
 - **Input Validation**: Validates rule formats, custom prompt length limits, and required dependencies
 - **Structured Output**: Results are formatted as readable GitHub PR comments with proper markdown escaping
+
+## Supported AI Agents
+
+### Cursor CLI
+- **Installation**: Official installer from cursor.sh
+- **API Key**: `CURSOR_API_KEY`
+- **Default Model**: `gpt-5`
+
+### Claude Code
+- **Installation**: npm package `@anthropic-ai/claude-code`
+- **API Key**: `ANTHROPIC_API_KEY`
+- **Default Model**: `claude-sonnet-4-20250514`
+
+### Gemini CLI
+- **Installation**: npm package `@google/gemini-cli`
+- **API Key**: `GOOGLE_API_KEY`
+- **Default Model**: `pro`
+
+### Codex CLI
+- **Installation**: npm package `@openai/codex`
+- **API Key**: `OPENAI_API_KEY`
+- **Default Model**: `gpt-5`
+
+### Amp Code
+- **Installation**: npm package `@sourcegraph/amp`
+- **API Key**: `AMP_API_KEY`
+- **Default Model**: `sonnet-4`
+
+### OpenCode
+- **Installation**: npm package `@opencode/cli`
+- **Multi-Provider Support**: Supports 75+ models across multiple providers
+- **API Keys**: Multiple keys supported based on model provider:
+  - `ANTHROPIC_API_KEY` for Anthropic Claude models
+  - `OPENAI_API_KEY` for OpenAI models
+  - `GOOGLE_API_KEY` for Google Gemini models
+  - `GROQ_API_KEY` for Groq models
+  - `COHERE_API_KEY` for Cohere models
+  - `MISTRAL_API_KEY` for Mistral models
+- **Default Model**: `anthropic/claude-sonnet-4-20250514`
+- **Model Format**: `provider/model` (e.g., `openai/gpt-4`, `google/gemini-pro`)
+- **Special Features**:
+  - Automatic provider detection from model string
+  - Quiet mode for clean CI/CD output
+  - Flexible configuration for different environments
 
 ## Dependencies
 
 - **GitHub CLI** (`gh`): Required for posting PR comments
 - **JSON processing**: `jq` for JSON parsing and manipulation
 - **YAML processing**: `yq` (optional, falls back to `jq`)
-- **AI Agent**: Cursor CLI (or other supported agents)
+- **Python 3**: Required for the main execution engine
+- **Node.js**: Required for npm-based agents (Claude, Gemini, Codex, OpenCode)
+- **AI Agents**: One of the supported agents listed above
 
 ## Extensibility
 
 The project is designed for easy extension:
 
-- **New Agents**: Add support in `install_agent.sh` and `run_prompts.sh`
+- **New Agents**: Add support in `install_agent.sh` and `run_prompts.py`
 - **New Rules**: Create additional `.prompt` files in `/rules/`
 - **New Actions**: Extend `action.yml` and add new output handlers
 - **Custom Prompts**: Support for team-specific analysis requirements
