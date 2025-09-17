@@ -337,6 +337,20 @@ class AgentRunner:
             'env_key': 'AMP_API_KEY',
             'default_model': 'sonnet-4',
             'args': ['-x']
+        },
+        'opencode': {
+            'cmd': 'opencode',
+            'env_key': 'OPENCODE_API_KEY',
+            'default_model': 'anthropic/claude-sonnet-4-20250514',
+            'args': ['run', '--quiet'],
+            'provider_env_mapping': {
+                'anthropic': 'ANTHROPIC_API_KEY',
+                'openai': 'OPENAI_API_KEY',
+                'google': 'GOOGLE_API_KEY',
+                'groq': 'GROQ_API_KEY',
+                'cohere': 'COHERE_API_KEY',
+                'mistral': 'MISTRAL_API_KEY'
+            }
         }
     }
 
@@ -359,6 +373,33 @@ class AgentRunner:
         logger.info(f"Using agent: {agent}, model: {model}")
 
         return model
+
+    @staticmethod
+    def setup_opencode_environment(model: str) -> dict:
+        """Setup environment variables for OpenCode based on the model provider"""
+        env = os.environ.copy()
+        config = AgentRunner.AGENT_CONFIG['opencode']
+
+        # Extract provider from model (format: provider/model)
+        if '/' in model:
+            provider = model.split('/')[0]
+        else:
+            # Default to anthropic if no provider specified
+            provider = 'anthropic'
+            model = f"anthropic/{model}"
+
+        # Set up environment variable for the specific provider
+        provider_env_mapping = config.get('provider_env_mapping', {})
+        if provider in provider_env_mapping:
+            env_var = provider_env_mapping[provider]
+            if env_var in os.environ:
+                logger.info(f"Using {env_var} for OpenCode {provider} provider")
+            else:
+                logger.warning(f"Environment variable {env_var} not found for {provider} provider")
+        else:
+            logger.warning(f"Unknown provider '{provider}' for OpenCode. Supported: {list(provider_env_mapping.keys())}")
+
+        return env
 
     @staticmethod
     def execute_agent(agent: str, prompt: str, model: str) -> str:
@@ -403,14 +444,20 @@ class AgentRunner:
             elif agent == 'amp':
                 cmd_args.append(prompt)
                 temp_file_path = None
+            elif agent == 'opencode':
+                cmd_args.extend(['--model', model, prompt])
+                temp_file_path = None
 
             # Set up environment
-            env = os.environ.copy()
-            if config['env_key'] in env:
-                if agent == 'cursor':
-                    env['CURSOR_API_KEY'] = env[config['env_key']]
-                elif agent == 'amp':
-                    env['AMP_API_KEY'] = env[config['env_key']]
+            if agent == 'opencode':
+                env = AgentRunner.setup_opencode_environment(model)
+            else:
+                env = os.environ.copy()
+                if config['env_key'] in env:
+                    if agent == 'cursor':
+                        env['CURSOR_API_KEY'] = env[config['env_key']]
+                    elif agent == 'amp':
+                        env['AMP_API_KEY'] = env[config['env_key']]
 
             # Execute command
             if temp_file_path and agent == 'cursor':
@@ -523,7 +570,7 @@ def main():
     parser.add_argument('custom_prompt', nargs='?', default='',
                        help='Custom prompt to execute')
     parser.add_argument('agent', nargs='?', default='cursor',
-                       help='Agent to use (cursor, claude, gemini, codex, amp)')
+                       help='Agent to use (cursor, claude, gemini, codex, amp, opencode)')
     parser.add_argument('scope', nargs='?', default='changed',
                        help='Analysis scope (changed, all)')
     parser.add_argument('custom_files', nargs='?', default='[]',

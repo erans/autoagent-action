@@ -36,7 +36,7 @@ inputs:
     default: true
 
   agent:
-    description: "Which agent to use. Supported: cursor, claude, gemini, codex, amp"
+    description: "Which agent to use. Supported: cursor, claude, gemini, codex, amp, opencode"
     required: false
     type: string
     default: "cursor"

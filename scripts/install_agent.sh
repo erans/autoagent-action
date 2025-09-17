@@ -73,9 +73,22 @@ case "$AGENT" in
       amp --version
     fi
     ;;
+  opencode)
+    echo "Installing opencode..."
+    # Check if opencode is already installed
+    if command -v opencode >/dev/null 2>&1; then
+      echo "opencode is already installed"
+      opencode --version
+    else
+      # Install opencode using npm
+      npm install -g @opencode/cli
+      echo "opencode installed successfully"
+      opencode --version
+    fi
+    ;;
   *)
     echo "Error: Unsupported agent: $AGENT"
-    echo "Supported agents: cursor, claude, gemini, codex, amp"
+    echo "Supported agents: cursor, claude, gemini, codex, amp, opencode"
     exit 1
     ;;
 esac

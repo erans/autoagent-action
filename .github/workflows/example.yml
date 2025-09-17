@@ -66,3 +66,25 @@ jobs:
           action: comment
           install-agent: true
           agent: cursor
+
+  # Test 4: OpenCode with multiple providers
+  opencode-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AutoAgent - OpenCode Analysis
+        uses: erans/autoagent-action@main
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          MODEL: anthropic/claude-sonnet-4-20250514
+        with:
+          rules: |
+            - code-review
+            - refactor-suggestions
+          custom: |
+            Please analyze the code for potential optimizations and suggest improvements.
+          action: comment
+          install-agent: true
+          agent: opencode
